@@ -3,10 +3,10 @@
 #AUTHOR: Ariadni Boziki
 
 import numpy as np
-import Constants as c
-import InputsPreparation as inputs
-import TwoPointCentralDifference as cendiff
-import CheckPeriodicvsNonPeriodic as pervsnonper
+from THeSeuSS import Constants as c
+from THeSeuSS import InputsPreparation as inputs
+from THeSeuSS import TwoPointCentralDifference as cendiff
+from THeSeuSS import CheckPeriodicvsNonPeriodic as pervsnonper
 
 
 class IntensityCalculator():
