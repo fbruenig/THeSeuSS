@@ -8,10 +8,10 @@ import os
 import re
 import itertools as it
 import numpy as np
-import MapAtoms as mapatoms
-import Coordinates as coords
-import InputsPreparation as inputs
-import CheckPeriodicvsNonPeriodic as pervsnonper
+from THeSeuSS import MapAtoms as mapatoms
+from THeSeuSS import Coordinates as coords
+from THeSeuSS import InputsPreparation as inputs
+from THeSeuSS import CheckPeriodicvsNonPeriodic as pervsnonper
 
 
 
