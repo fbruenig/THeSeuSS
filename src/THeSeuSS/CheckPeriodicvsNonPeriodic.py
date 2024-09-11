@@ -5,12 +5,12 @@
 import os
 import re
 import numpy as np
-import GeometryInputConversion as geominput
-import MapAtoms
-import GenerateDisplacementsMolecules as dispsmolecules
-import SubmitCalculations as submit
-import CheckSuccessOutput as check
-import EigenvectorsFrequenciesPHONOPY as eigenvec
+from THeSeuSS import GeometryInputConversion as geominput
+from THeSeuSS import MapAtoms
+from THeSeuSS import GenerateDisplacementsMolecules as dispsmolecules
+from THeSeuSS import SubmitCalculations as submit
+from THeSeuSS import CheckSuccessOutput as check
+from THeSeuSS import EigenvectorsFrequenciesPHONOPY as eigenvec
 
 
 class PeriodicvsNonPeriodic():
