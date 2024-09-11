@@ -10,8 +10,8 @@ import re
 import difflib
 import itertools as it
 import math
-import InputOutputFiles as inputfiles
-import CheckPeriodicvsNonPeriodic as pervsnonper
+from THeSeuSS import InputOutputFiles as inputfiles
+from THeSeuSS import CheckPeriodicvsNonPeriodic as pervsnonper
 
 
 
