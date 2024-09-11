@@ -4,7 +4,7 @@
 
 import shutil
 import numpy as np
-import InputsPreparation as inputs
+from THeSeuSS import InputsPreparation as inputs
 import os
 
 
