@@ -16,7 +16,7 @@ from THeSeuSS import MapAtoms
 from THeSeuSS import PlotSpectra as plots
 from THeSeuSS import Coordinates as coords
 from THeSeuSS import CheckSuccessOutput as check
-from TheSeuSS import CheckPeriodicvsNonPeriodic as pervsnonper
+from THeSeuSS import CheckPeriodicvsNonPeriodic as pervsnonper
 import numpy as np
 import argparse
 import re
