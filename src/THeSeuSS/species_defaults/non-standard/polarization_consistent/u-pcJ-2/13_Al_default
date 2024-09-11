@@ -1,0 +1,69 @@
+# u-pcJ-2
+  species        Al
+#     global species definitions
+    nucleus             13
+    mass                26.9815386
+#
+    l_hartree           8
+#
+    cut_pot             4.0          2.0  1.0
+    basis_dep_cutoff    0.d0
+#
+    radial_base         41 7.0
+    radial_multiplier   6
+    angular_grids       specified
+      division   0.6594  110
+      division   0.8170  194
+      division   0.9059  302
+      division   1.0363  434
+      division   1.1443  590
+#      division   1.2621  770
+#      division   2.8177  974
+#      outer_grid   974
+      outer_grid   590
+################################################################################
+#
+#  Definition of "minimal" basis
+#
+################################################################################
+#     valence basis states
+    valence      3  s   2.
+    valence      3  p   1.
+#     ion occupancy
+    ion_occ      3  s   1.
+    ion_occ      2  p   6.
+
+    include_min_basis   .false.
+    pure_gauss          .true.
+
+gaussian 0 1  0.311689E+08
+gaussian 0 1  0.124676E+07
+gaussian 0 1  0.997406E+05
+gaussian 0 1  0.149488E+05
+gaussian 0 1  0.340254E+04
+gaussian 0 1  0.963526E+03
+gaussian 0 1  0.314045E+03
+gaussian 0 1  0.112883E+03
+gaussian 0 1  0.434736E+02
+gaussian 0 1  0.172917E+02
+gaussian 0 1  0.616220E+01
+gaussian 0 1  0.252257E+01
+gaussian 0 1  0.968742E+00
+gaussian 0 1  0.192507E+00
+gaussian 0 1  0.678131E-01
+gaussian 1 1  0.376812E+04
+gaussian 1 1  0.579711E+03
+gaussian 1 1  0.137542E+03
+gaussian 1 1  0.440670E+02
+gaussian 1 1  0.161481E+02
+gaussian 1 1  0.648883E+01
+gaussian 1 1  0.266323E+01
+gaussian 1 1  0.107925E+01
+gaussian 1 1  0.397715E+00
+gaussian 1 1  0.134753E+00
+gaussian 1 1  0.421854E-01
+gaussian 2 1  0.6615000000E+02
+gaussian 2 1  0.1470000000E+01
+gaussian 2 1  0.3300000000E+00
+gaussian 3 1  0.2160000000E+02
+gaussian 3 1  0.4800000000E+00

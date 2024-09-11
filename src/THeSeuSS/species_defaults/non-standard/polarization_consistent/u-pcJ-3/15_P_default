@@ -1,0 +1,80 @@
+# u-pcJ-3
+  species        P
+#     global species definitions
+    nucleus             15
+    mass                30.973762
+#
+    l_hartree           8
+#
+    cut_pot             4.0          2.0  1.0
+    basis_dep_cutoff    0.d0
+#
+    radial_base         43 7.0
+    radial_multiplier   6
+    angular_grids       specified
+      division   0.5238  110
+      division   0.6544  194
+      division   0.7277  302
+      division   0.8489  434
+      division   0.9855  590
+#      division   1.0863  770
+#      division   2.6016  974
+#      outer_grid  974
+      outer_grid  590
+################################################################################
+#
+#  Definition of "minimal" basis
+#
+################################################################################
+#     valence basis states
+    valence      3  s   2.
+    valence      3  p   3.
+#     ion occupancy
+    ion_occ      3  s   1.
+    ion_occ      3  p   2.
+
+    include_min_basis   .false.
+    pure_gauss          .true.
+
+gaussian 0 1  0.332403E+09
+gaussian 0 1  0.132961E+08
+gaussian 0 1  0.106369E+07
+gaussian 0 1  0.160001E+06
+gaussian 0 1  0.365133E+05
+gaussian 0 1  0.103592E+05
+gaussian 0 1  0.338283E+04
+gaussian 0 1  0.122229E+04
+gaussian 0 1  0.477305E+03
+gaussian 0 1  0.198087E+03
+gaussian 0 1  0.859940E+02
+gaussian 0 1  0.386272E+02
+gaussian 0 1  0.176880E+02
+gaussian 0 1  0.725513E+01
+gaussian 0 1  0.326989E+01
+gaussian 0 1  0.143127E+01
+gaussian 0 1  0.470467E+00
+gaussian 0 1  0.212895E+00
+gaussian 0 1  0.877424E-01
+gaussian 1 1  0.179542E+05
+gaussian 1 1  0.276218E+04
+gaussian 1 1  0.654784E+03
+gaussian 1 1  0.212581E+03
+gaussian 1 1  0.798946E+02
+gaussian 1 1  0.333660E+02
+gaussian 1 1  0.149865E+02
+gaussian 1 1  0.696804E+01
+gaussian 1 1  0.328178E+01
+gaussian 1 1  0.152471E+01
+gaussian 1 1  0.669237E+00
+gaussian 1 1  0.299291E+00
+gaussian 1 1  0.128110E+00
+gaussian 1 1  0.509917E-01
+gaussian 2 1  0.1156500000E+03
+gaussian 2 1  0.7710000000E+01
+gaussian 2 1  0.2030000000E+01
+gaussian 2 1  0.6000000000E+00
+gaussian 2 1  0.2200000000E+00
+gaussian 3 1  0.2680000000E+02
+gaussian 3 1  0.1340000000E+01
+gaussian 3 1  0.4500000000E+00
+gaussian 4 1  0.7200000000E+00
