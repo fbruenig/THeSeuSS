@@ -6,8 +6,8 @@ cartesian polarization of irreducible atoms back to reducible atoms.'''
 import os
 import spglib
 import numpy as np
-import InputsPreparation as inputs
-import Coordinates as coords
+from THeSeuSS import InputsPreparation as inputs
+from THeSeuSS import Coordinates as coords
 
 
 class spglibProcessor():
