@@ -4,9 +4,9 @@
 
 import os
 import sys
-import InputsPreparation as inputs
-import Constants as c
-import CheckPeriodicvsNonPeriodic as pervsnonper
+from THeSeuSS import InputsPreparation as inputs
+from THeSeuSS import Constants as c
+from THeSeuSS import CheckPeriodicvsNonPeriodic as pervsnonper
 import hsd
 from collections import OrderedDict
 
