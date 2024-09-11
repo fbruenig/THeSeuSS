@@ -5,18 +5,18 @@
 
 import os
 import subprocess
-import InputOutputFiles as inputfiles
-import FiniteDisplacements_phonopy as disp
-import TwoPointCentralDifference as cendiff
-import EigenvectorsFrequenciesPHONOPY as eigvec
-import IRRamanSpectra as spectra
-import InputsPreparation as inputs
-import SubmitCalculations as submit
-import MapAtoms
-import PlotSpectra as plots
-import Coordinates as coords
-import CheckSuccessOutput as check
-import CheckPeriodicvsNonPeriodic as pervsnonper
+from THeSeuSS import InputOutputFiles as inputfiles
+from THeSeuSS import FiniteDisplacements_phonopy as disp
+from THeSeuSS import TwoPointCentralDifference as cendiff
+from THeSeuSS import EigenvectorsFrequenciesPHONOPY as eigvec
+from THeSeuSS import IRRamanSpectra as spectra
+from THeSeuSS import InputsPreparation as inputs
+from THeSeuSS import SubmitCalculations as submit
+from THeSeuSS import MapAtoms
+from THeSeuSS import PlotSpectra as plots
+from THeSeuSS import Coordinates as coords
+from THeSeuSS import CheckSuccessOutput as check
+from TheSeuSS import CheckPeriodicvsNonPeriodic as pervsnonper
 import numpy as np
 import argparse
 import re
