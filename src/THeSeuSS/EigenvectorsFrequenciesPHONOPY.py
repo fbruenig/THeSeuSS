@@ -6,9 +6,9 @@ import yaml
 import math
 import numpy as np
 import scipy.linalg as spl
-import Constants as c
-import SubmitCalculations as submit
-import InputsPreparation as inputs
+from THeSeuSS import Constants as c
+from THeSeuSS import SubmitCalculations as submit
+from THeSeuSS import InputsPreparation as inputs
 from mendeleev import element
 
 
