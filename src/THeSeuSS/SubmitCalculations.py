@@ -8,9 +8,9 @@ import subprocess
 import shutil
 import concurrent.futures
 import numpy as np
-import InputsPreparation as inputs
-import FiniteDisplacements_phonopy as finitedisps
-import EigenvectorsFrequenciesPHONOPY as eigenfreq
+from THeSeuSS import InputsPreparation as inputs
+from THeSeuSS import FiniteDisplacements_phonopy as finitedisps
+from THeSeuSS import EigenvectorsFrequenciesPHONOPY as eigenfreq
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from phonopy import Phonopy
