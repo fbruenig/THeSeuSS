@@ -4,7 +4,7 @@ enabling the subsequent calculation of molecular vibrational frequencies.'''
 #AUTHOR: Ariadni Boziki
 
 import numpy as np
-import InputsPreparation as inputs
+from THeSeuSS import InputsPreparation as inputs
 from itertools import chain
 import shutil, os
 from collections import OrderedDict
