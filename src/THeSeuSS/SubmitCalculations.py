@@ -12,7 +12,7 @@ from THeSeuSS import InputsPreparation as inputs
 from THeSeuSS import FiniteDisplacements_phonopy as finitedisps
 from THeSeuSS import EigenvectorsFrequenciesPHONOPY as eigenfreq
 import multiprocessing
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from phonopy import Phonopy
 from phonopy.interface.calculator import read_crystal_structure, write_crystal_structure, write_supercells_with_displacements, get_default_displacement_distance
 from phonopy.file_IO import write_FORCE_SETS, write_FORCE_CONSTANTS
