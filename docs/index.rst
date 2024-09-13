@@ -6,21 +6,13 @@ This is the documentation of **THeSeuSS**.
 
 .. note::
 
-    This is the main page of your project's `Sphinx`_ documentation.
-    It is formatted in `reStructuredText`_. Add additional pages
-    by creating rst-files in ``docs`` and adding them to the `toctree`_ below.
-    Use then `references`_ in order to link them from this page, e.g.
-    :ref:`authors` and :ref:`changes`.
-
-    It is also possible to refer to the documentation of other Python packages
-    with the `Python domain syntax`_. By default you can reference the
-    documentation of `Sphinx`_, `Python`_, `NumPy`_, `SciPy`_, `matplotlib`_,
-    `Pandas`_, `Scikit-Learn`_. You can add more by extending the
-    ``intersphinx_mapping`` in your Sphinx's ``conf.py``.
-
-    The pretty useful extension `autodoc`_ is activated by default and lets
-    you include documentation from docstrings. Docstrings can be written in
-    `Google style`_ (recommended!), `NumPy style`_ and `classical style`_.
+        THeSeuS is a Python package designed to streamline the simulation of IR/Raman and THz spectra. 
+        It interfaces seamlessly with electronic structure codes such as FHIaims and DFTB+ for spectrum calculations at both DFT and DFTB levels.
+        Beyond spectrum calculations, THeSeuS also offers capabilities for computing vibrational frequencies of molecules and phonon modes of periodic systems. 
+        Notably, users can opt for structural computations without the additional step of intensity spectrum analysis.
+        A standout feature of THeSeuS is its full automation. 
+        Users can utilize the package for cell/geometry optimizations at the FHIaims or DFTB+ level with minimal manual intervention. 
+        By simply providing the experimental structure, THeSeuS automates the generation of input files and other necessary tasks, ensuring efficient and hassle-free simulations.
 
 
 Contents
