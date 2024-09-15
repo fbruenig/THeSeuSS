@@ -336,11 +336,11 @@ class Calculator:
             if 'Coord' in ii:
                 conts.append(ii)
         conts.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
+        no_of_folders = len(conts)
 
         number_of_cores = os.environ.get('number_of_cores')
         if number_of_cores is not None:
             number_of_cores = int(number_of_cores)
-            no_of_folders = len(conts)
             num_threads = max(1, int(number_of_cores/no_of_folders))  # Adjust the number of threads as needed
             print(f'NUMBER OF CORES ALLOCATED PER SINGLE POINT CALCULATION ASSOCIATED TO FINITE DIFFERENCE METHOD: {num_threads}')
 
@@ -349,7 +349,11 @@ class Calculator:
             last_part = parts[-1].strip()
         else:
             num_threads = multiprocessing.cpu_count()
-            print(f'NUMBER OF CORES: {num_threads}')
+            if num_threads <= no_of_folders:
+                print(f'NUMBER OF CORES: {num_threads}')
+            else:
+                num_threads = max(1, int(num_threads/no_of_folders))  # Adjust the number of threads as needed
+                print(f'NUMBER OF CORES ALLOCATED PER SINGLE POINT CALCULATION ASSOCIATED TO FINITE DIFFERENCE METHOD: {num_threads}')
 
         for i in conts:
             if number_of_cores is not None:
