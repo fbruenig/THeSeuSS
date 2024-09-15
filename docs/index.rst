@@ -21,7 +21,10 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   Overview <readme>
+   About <readme>
+   Installation <installing>
+   Getting started <gettingstarted>
+   Tutorials <tutorials>
    Contributions & Help <contributing>
    License <license>
    Authors <authors>
