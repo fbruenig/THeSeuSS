@@ -60,6 +60,7 @@ def main(
     check_calculator = check.CheckOutputSuccess(code, output_file, dispersion, functional)
     phonopy_calculator = submit.PhonopyCalculator(code, cell_dims, output_file)
 
+
     message = 'Input'
     border = '*' * (len(message) + 4)
     print(f'{border}\n* {message} *\n{border}')
