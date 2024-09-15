@@ -353,7 +353,6 @@ class Calculator:
 
         for i in conts:
             if number_of_cores is not None:
-                print('HELLO')
                 if ";" not in self.commands: 
                     command_tmp = f'cd vibrations; cd {i}; srun --cpus-per-task 1 --ntasks {num_threads} {last_part}'
                 else:
@@ -363,7 +362,6 @@ class Calculator:
             command_statement.append(command_tmp)
 
             if self.code == 'aims' and self.functional not in ['pbe', 'lda']:
-                print('HELLO1')
                 if number_of_cores is not None:
                     command_tmp = f'cd vibrations; cd {i}; cd polarizability; {first_part}; srun --cpus-per-task 1 --ntasks {num_threads} {last_part}'
                 else:

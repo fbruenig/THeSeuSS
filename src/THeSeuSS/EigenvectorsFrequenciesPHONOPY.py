@@ -248,7 +248,7 @@ class VibrationalFrequencies():
         """
 
         eigvals, eigvecs = np.linalg.eigh(hessian)
-        print(eigvecs)
+
         #   Different method for the diagonalization. The results of both methods 
         #   are almost identical
         #   eigvals_test, eigvecs_test = spl.eigh(hessian_mass_weighted)

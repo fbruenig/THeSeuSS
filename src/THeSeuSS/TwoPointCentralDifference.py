@@ -210,6 +210,7 @@ class TwoPointCentralDiff():
         for i in contents:
             if 'Coord' in i:
                 drct.append(i)
+        drct.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
         self.sign_atom_coord = []
         for dirname, item in it.combinations(drct, 2):
             atom_coord1 = dirname.split('-')[1]
@@ -237,7 +238,7 @@ class TwoPointCentralDiff():
             no_of_element = dir1.split('-')[2]
             self._map_axis_coord(dir1.split('-')[3]) 
             polarizability1, cart_pol1 = self._find_pattern(dir1)
-
+            
             dir2 = item[1]     # Second directory
             sign2 = dir2[-1]
             polarizability2, cart_pol2 = self._find_pattern(dir2)
@@ -253,7 +254,7 @@ class TwoPointCentralDiff():
             self.cartesian_pol = np.append(self.cartesian_pol,[cartesian_pol_tmp], axis = 0)
 
             tmp_element_axis_coord = [no_of_element, self.axis_coord]
-            self.element_axis_coord = np.append(self.element_axis_coord, [tmp_element_axis_coord], axis = 0) 
+            self.element_axis_coord = np.append(self.element_axis_coord, [tmp_element_axis_coord], axis = 0)
 
     def coord_conversion_cartesian_to_fractional(self):
         """
