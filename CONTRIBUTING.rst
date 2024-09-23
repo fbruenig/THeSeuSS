@@ -33,10 +33,6 @@ This document focuses on getting any potential contributor familiarized
 with the development processes, but `other kinds of contributions`_ are also
 appreciated.
 
-If you are new to using git_ or have never collaborated in a project previously,
-please have a look at `contribution-guide.org`_. Other resources are also
-listed in the excellent `guide created by FreeCodeCamp`_ [#contrib1]_.
-
 Please notice, all users and contributors are expected to be **open,
 considerate, reasonable, and respectful**. When in doubt, `Python Software
 Foundation's Code of Conduct`_ is a good reference in terms of behavior
@@ -60,47 +56,6 @@ New issue reports should include information about your programming environment
 Please try also to simplify the reproduction steps to a very minimal example
 that still illustrates the problem you are facing. By removing other factors,
 you help us to identify the root cause of the issue.
-
-
-Documentation Improvements
-==========================
-
-You can help improve ``THeSeuSS`` docs by making them more readable and coherent, or
-by adding missing information and correcting mistakes.
-
-``THeSeuSS`` documentation uses Sphinx_ as its main documentation compiler.
-This means that the docs are kept in the same repository as the project code, and
-that any documentation update is done in the same way was a code contribution.
-
-.. todo:: Don't forget to mention which markup language you are using.
-
-    e.g.,  reStructuredText_ or CommonMark_ with MyST_ extensions.
-
-.. todo:: If your project is hosted on GitHub, you can also mention the following tip:
-
-   .. tip::
-      Please notice that the `GitHub web interface`_ provides a quick way of
-      propose changes in ``THeSeuSS``'s files. While this mechanism can
-      be tricky for normal code contributions, it works perfectly fine for
-      contributing to the docs, and can be quite handy.
-
-      If you are interested in trying this method out, please navigate to
-      the ``docs`` folder in the source repository_, find which file you
-      would like to propose changes and click in the little pencil icon at the
-      top, to open `GitHub's code editor`_. Once you finish editing the file,
-      please write a message in the form at the bottom of the page describing
-      which changes have you made and what are the motivations behind them and
-      submit your proposal.
-
-When working on documentation changes in your local machine, you can
-compile them using |tox|_::
-
-    tox -e docs
-
-and use Python's built-in web server for a preview in your web browser
-(``http://localhost:8000``)::
-
-    python3 -m http.server --directory 'docs/_build/html'
 
 
 Code Contributions
@@ -272,33 +227,33 @@ package:
    You can also setup breakpoints manually instead of using the ``--pdb`` option.
 
 
-Maintainer tasks
-================
+.. Maintainer tasks
+.. ================
 
-Releases
---------
+.. Releases
+.. --------
 
 .. todo:: This section assumes you are using PyPI to publicly release your package.
 
-   If instead you are using a different/private package index, please update
-   the instructions accordingly.
+.. If instead you are using a different/private package index, please update
+.. the instructions accordingly.
 
-If you are part of the group of maintainers and have correct user permissions
-on PyPI_, the following steps can be used to release a new version for
-``THeSeuSS``:
+.. If you are part of the group of maintainers and have correct user permissions
+.. on PyPI_, the following steps can be used to release a new version for
+.. ``THeSeuSS``:
 
-#. Make sure all unit tests are successful.
-#. Tag the current commit on the main branch with a release tag, e.g., ``v1.2.3``.
-#. Push the new tag to the upstream repository_, e.g., ``git push upstream v1.2.3``
-#. Clean up the ``dist`` and ``build`` folders with ``tox -e clean``
-   (or ``rm -rf dist build``)
-   to avoid confusion with old builds and Sphinx docs.
-#. Run ``tox -e build`` and check that the files in ``dist`` have
-   the correct version (no ``.dirty`` or git_ hash) according to the git_ tag.
-   Also check the sizes of the distributions, if they are too big (e.g., >
-   500KB), unwanted clutter may have been accidentally included.
-#. Run ``tox -e publish -- --repository pypi`` and check that everything was
-   uploaded to PyPI_ correctly.
+.. #. Make sure all unit tests are successful.
+.. #. Tag the current commit on the main branch with a release tag, e.g., ``v1.2.3``.
+.. #. Push the new tag to the upstream repository_, e.g., ``git push upstream v1.2.3``
+.. #. Clean up the ``dist`` and ``build`` folders with ``tox -e clean``
+..    (or ``rm -rf dist build``)
+..    to avoid confusion with old builds and Sphinx docs.
+.. #. Run ``tox -e build`` and check that the files in ``dist`` have
+..    the correct version (no ``.dirty`` or git_ hash) according to the git_ tag.
+..    Also check the sizes of the distributions, if they are too big (e.g., >
+..    500KB), unwanted clutter may have been accidentally included.
+.. #. Run ``tox -e publish -- --repository pypi`` and check that everything was
+..    uploaded to PyPI_ correctly.
 
 
 
