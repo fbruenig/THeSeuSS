@@ -23,9 +23,9 @@
         :alt: Twitter
         :target: https://twitter.com/THeSeuSS
 
-.. image:: https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold
-    :alt: Project generated with PyScaffold
-    :target: https://pyscaffold.org/
+    .. image:: https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold
+        :alt: Project generated with PyScaffold
+        :target: https://pyscaffold.org/
 
 |
 
@@ -34,7 +34,7 @@ THeSeuSS
 ========
 
 
-.. image:: Logo_THeSeuSS.jpg 
+.. image:: Logo_THeSeuSS.png 
         :width: 400
 
 
@@ -46,11 +46,6 @@ Beyond spectrum calculations, THeSeuS also offers capabilities for computing vib
 A standout feature of THeSeuS is its full automation. Users can utilize the package for cell/geometry optimizations at the FHIaims or DFTB+ level with minimal manual intervention. By simply providing the experimental structure, THeSeuS automates the generation of input files and other necessary tasks, ensuring efficient and hassle-free simulations.
 
 
+Acknowledgements
+================
 
-.. _pyscaffold-notes:
-
-Note
-====
-
-This project has been set up using PyScaffold 4.5. For details and usage
-information on PyScaffold see https://pyscaffold.org/.
