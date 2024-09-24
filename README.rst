@@ -43,6 +43,12 @@ THeSeuSS
 Utilizing Density Functional Theory (DFT) and Density Functional Tight Binding (DFTB) methods, ``THeSeuSS`` offers robust capabilities for detailed vibrational spectra simulations. With its user-friendly interface and seamless integration with established computational chemistry software (``FHIaims`` for DFT and ``DFTB+`` for DFTB calculations), ``THeSeuSS`` significantly enhances the accessibility and applicability of advanced spectroscopic simulations, supporting research and development in chemical, pharmaceutical, and material sciences.
 
 
+How to use THeSeuSS
+===================
+
+For detailed instructions on using ``THeSeuSS``, please refer to the documentation at: https://ariadni20.github.io/THeSeuSS/.
+
+
 How to cite THeSeuSS
 ====================
 
