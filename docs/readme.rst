@@ -4,9 +4,11 @@
     .. image:: https://api.cirrus-ci.com/github/<USER>/THeSeuSS.svg?branch=main
         :alt: Built Status
         :target: https://cirrus-ci.com/github/<USER>/THeSeuSS
+
     .. image:: https://readthedocs.org/projects/THeSeuSS/badge/?version=latest
         :alt: ReadTheDocs
         :target: https://THeSeuSS.readthedocs.io/en/stable/
+
     .. image:: https://img.shields.io/coveralls/github/<USER>/THeSeuSS/main.svg
         :alt: Coveralls
         :target: https://coveralls.io/r/<USER>/THeSeuSS
@@ -34,13 +36,20 @@ THeSeuSS
 ========
 
 
-THeSeuS is a Python package designed to streamline the simulation of IR/Raman and THz spectra. It interfaces seamlessly with electronic structure codes such as FHIaims and DFTB+ for spectrum calculations at both DFT and DFTB levels.
+**THeSeuSS** (**TH**\ z **S**\ pectra **S**\ imulations **S**\ oftware) is an open source, advanced, automated Python platform designed to simulate IR, Raman and THz spectra for both periodic and non-periodic systems.
 
-Beyond spectrum calculations, THeSeuS also offers capabilities for computing vibrational frequencies of molecules and phonon modes of periodic systems. Notably, users can opt for structural computations without the additional step of intensity spectrum analysis.
+Utilizing Density Functional Theory (DFT) and Density Functional Tight Binding (DFTB) methods, ``THeSeuSS`` offers robust capabilities for detailed vibrational spectra simulations. With its user-friendly interface and seamless integration with established computational chemistry software (``FHIaims`` for DFT and ``DFTB+`` for DFTB calculations), ``THeSeuSS`` significantly enhances the accessibility and applicability of advanced spectroscopic simulations, supporting research and development in chemical, pharmaceutical, and material sciences.
 
-A standout feature of THeSeuS is its full automation. Users can utilize the package for cell/geometry optimizations at the FHIaims or DFTB+ level with minimal manual intervention. By simply providing the experimental structure, THeSeuS automates the generation of input files and other necessary tasks, ensuring efficient and hassle-free simulations.
 
+How to cite THeSeuSS
+====================
+
+If you have used ``THeSeuSS`` in your research, please cite the following article:
+
+Boziki, A., Mebenga, F. N., Fernandes, P., & Tkatchenko, A. (2024). A Journey with THeSeuSS: Automated Python Tool for Modeling IR and Raman Vibrational Spectra of Molecules and Solids. arXiv preprint arXiv:2409.06597.
 
 Acknowledgements
 ================
 
+.. image:: _static/acknowledgements.png 
+        :width: 700
