@@ -112,22 +112,15 @@ class spglibProcessor():
 
     def _equivalent_symmetry_atoms(self)-> np.ndarray:
         """
-        Utilizes the spglib library to compute and return a dictionary 
+        Utilizes the spglib library to compute and return an array 
         mapping equivalent atoms within the crystal structure.
         """
-
-        equiv_atoms = dict()	
 
         path_input_vibrations = self._set_path_of_vibrations()
         self._set_geometry_processor(path_input_vibrations)
         self._extract_structural_characteristics()
 
         equivalent_atoms = self.dataset['equivalent_atoms']
-
-        index = 0 
-        for item in equivalent_atoms:
-            equiv_atoms[index] = item
-            index += 1	
 
         return equivalent_atoms
 
