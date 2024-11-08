@@ -15,12 +15,13 @@ from THeSeuSS import EigenvectorsFrequenciesPHONOPY as eigenvec
 
 class PeriodicvsNonPeriodic():
 
-    def __init__(self, code: str, cell_dims: str, output_file: str, dispersion: bool, commands: str, functional: str = None):
+    def __init__(self, code: str, cell_dims: str, output_file: str, dispersion: bool, restart: bool, commands: str, functional: str = None):
 
         self.code = code
         self.cell_dims = cell_dims
         self.output_file = output_file
         self.dispersion = dispersion
+        self.restart = restart
         self.commands = commands
         self.functional = functional
         self.non_periodic = True
@@ -50,7 +51,7 @@ class PeriodicvsNonPeriodic():
         self.geometry_conversion = geominput.GeometryConversion(self.code)
         self.generated_displacements_mol = dispsmolecules.GenerateDisplacements(self.code)
         self.check_calculator = check.CheckOutputSuccess(self.code, self.output_file, self.dispersion, self.functional)
-        self.calculator = submit.Calculator(self.code, self.output_file, self.dispersion, self.functional, self.commands)
+        self.calculator = submit.Calculator(self.code, self.output_file, self.dispersion, self.restart, self.functional, self.commands)
         self.vibrational_freq = eigenvec.VibrationalFrequencies(self.code, self.output_file, self.dispersion)
 
     def _specify_geometry_inputs(self):
