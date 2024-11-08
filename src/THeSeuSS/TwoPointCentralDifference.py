@@ -17,12 +17,13 @@ from THeSeuSS import CheckPeriodicvsNonPeriodic as pervsnonper
 
 class TwoPointCentralDiff():
 
-    def __init__(self, code: str, output_file: str, dispersion: bool, supercell: bool, functional: str = None):
+    def __init__(self, code: str, output_file: str, dispersion: bool, supercell: bool, restart: bool, functional: str = None):
 
         self.code = code
         self.output_file = output_file
         self.dispersion = dispersion
         self.supercell = supercell
+        self.restart = restart
         self.functional = functional
         self.path = os.getcwd()
         self.pol = np.empty([0,6])	
@@ -46,7 +47,7 @@ class TwoPointCentralDiff():
         Setup PeriodicvsNonPeriodic class.
         """
 
-        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.commands, self.functional)
+        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
         self.non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
 
     def _split_line(self, line: str)-> np.ndarray:
