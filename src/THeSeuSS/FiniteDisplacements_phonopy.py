@@ -33,7 +33,8 @@ class FDSubdirectoriesGeneration():
         max_SCC_iterations: str, 
         output_file: str,
         dispersion: bool,
-        dispersion_type: str
+        dispersion_type: str,
+        restart: bool
     ):
 
         self.code = code
@@ -51,6 +52,7 @@ class FDSubdirectoriesGeneration():
         self.output_file = output_file
         self.dispersion = dispersion
         self.dispersion_type = dispersion_type
+        self.restart = restart
         self.path = os.getcwd()
         self.cell_dims = None
         self.commands = None
@@ -138,7 +140,7 @@ class FDSubdirectoriesGeneration():
         with the atoms' coordinates starting from the 3rd line.
         """
 
-        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.commands, self.functional)
+        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
         non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
 
         if not non_periodic:
@@ -323,7 +325,7 @@ class FDSubdirectoriesGeneration():
 
         self.generator = inputfiles.InputsGenerator(self.code, self.kpoints, self.functional, self.eev, self.rho, self.etot, self.forces, 
             self.sc_iter_limit, self.species, True, None, None, None, self.pol_grid, None, None, 
-            self.SCC_tolerance, self.max_SCC_iterations, self.output_file, None, None)
+            self.SCC_tolerance, self.max_SCC_iterations, self.output_file, None, None, self.restart)
 
         dir_path = os.path.join(self.path, 'vibrations')
 
@@ -347,7 +349,7 @@ class FDSubdirectoriesGeneration():
 
         self.generator = inputfiles.InputsGenerator(self.code, self.kpoints, 'pbe', self.eev, self.rho, self.etot, self.forces, 
             self.sc_iter_limit, self.species, False, None, None, None, self.pol_grid, None, None, 
-            self.SCC_tolerance, self.max_SCC_iterations, self.output_file, self.dispersion, self.dispersion_type)
+            self.SCC_tolerance, self.max_SCC_iterations, self.output_file, self.dispersion, self.dispersion_type, self.restart)
 
         dir_path = os.path.join(self.path, 'vibrations')
 
@@ -372,7 +374,7 @@ class FDSubdirectoriesGeneration():
 
         self.generator = inputfiles.InputsGenerator(self.code, self.kpoints, self.functional, self.eev, self.rho, self.etot, self.forces, 
             self.sc_iter_limit, self.species, True, None, None, None, self.pol_grid, None, None, 
-            self.SCC_tolerance, self.max_SCC_iterations, self.output_file, self.dispersion, self.dispersion_type)
+            self.SCC_tolerance, self.max_SCC_iterations, self.output_file, self.dispersion, self.dispersion_type, self.restart)
 
         if self.code == 'aims':
             try:
