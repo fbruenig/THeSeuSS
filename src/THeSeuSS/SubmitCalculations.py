@@ -11,6 +11,7 @@ import numpy as np
 from THeSeuSS import InputsPreparation as inputs
 from THeSeuSS import FiniteDisplacements_phonopy as finitedisps
 from THeSeuSS import EigenvectorsFrequenciesPHONOPY as eigenfreq
+from THeSeuSS import Restart as restart
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 from phonopy import Phonopy
@@ -241,13 +242,14 @@ class PhonopyCalculator:
 
 class Calculator:
 
-    def __init__(self, code: str, output_file: str, dispersion: bool, functional: str = None, commands: str = None):
+    def __init__(self, code: str, output_file: str, dispersion: bool, restart: bool, functional: str = None, commands: str = None):
 
         self.code = code
         self.commands = commands
         self.output_file = output_file
         self.functional = functional
         self.dispersion = dispersion
+        self.restart = restart
 
     def submit_job(self):
         """
@@ -328,15 +330,21 @@ class Calculator:
 
         command_statement = []
 
-        path = os.getcwd()
-        new_path = os.path.join(path, 'vibrations')
-        contents = [item for item in os.listdir(new_path) if os.path.isdir(os.path.join(new_path, item))]
-        conts = []
-        for ii in contents:
-            if 'Coord' in ii:
-                conts.append(ii)
-        conts.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
-        no_of_folders = len(conts)
+        if self.restart:
+            rst = restart.RestartCalculation(self.code, self.output_file, self.dispersion, self.restart, self.functional, self.commands)
+            not_completed_calcs = rst.directory_non_completed_calculations()
+            no_of_folders = len(not_completed_calcs)
+
+        else:
+            path = os.getcwd()
+            new_path = os.path.join(path, 'vibrations')
+            contents = [item for item in os.listdir(new_path) if os.path.isdir(os.path.join(new_path, item))]
+            conts = []
+            for ii in contents:
+                if 'Coord' in ii:
+                    conts.append(ii)
+            conts.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
+            no_of_folders = len(conts)
 
         number_of_cores = os.environ.get('number_of_cores')
         if number_of_cores is not None:
@@ -355,29 +363,41 @@ class Calculator:
                 num_threads = max(1, int(num_threads/no_of_folders))  # Adjust the number of threads as needed
                 print(f'NUMBER OF CORES ALLOCATED PER SINGLE POINT CALCULATION ASSOCIATED TO FINITE DIFFERENCE METHOD: {num_threads}')
 
-        for i in conts:
-            if number_of_cores is not None:
-                if ";" not in self.commands: 
-                    command_tmp = f'cd vibrations; cd {i}; srun --cpus-per-task 1 --ntasks {num_threads} {last_part}'
-                else:
-                    command_tmp = f'cd vibrations; cd {i}; {first_part}; srun --cpus-per-task 1 --ntasks {num_threads} {last_part}'
-            else:
-                command_tmp = f'cd vibrations; cd {i}; {self.commands}'
-            command_statement.append(command_tmp)
-
-            if self.code == 'aims' and self.functional not in ['pbe', 'lda']:
+        if self.restart:
+            for i in not_completed_calcs:
                 if number_of_cores is not None:
-                    command_tmp = f'cd vibrations; cd {i}; cd polarizability; {first_part}; srun --cpus-per-task 1 --ntasks {num_threads} {last_part}'
+                    if ";" not in self.commands: 
+                        command_tmp = f'cd {i}; srun --cpus-per-task 1 --ntasks {num_threads} {last_part}'
+                    else:
+                        command_tmp = f'cd {i}; {first_part}; srun --cpus-per-task 1 --ntasks {num_threads} {last_part}'
                 else:
-                    command_tmp = f'cd vibrations; cd {i}; cd polarizability; {self.commands}'
+                    command_tmp = f'cd {i}; {self.commands}'
                 command_statement.append(command_tmp)
 
-            if self.dispersion and self.code == 'dftb+':
+        else:
+            for i in conts:
                 if number_of_cores is not None:
-                    command_tmp = f'cd vibrations; cd {i}; cd polarizability; srun --cpus-per-task 1 --ntasks {num_threads} {last_part}'
+                    if ";" not in self.commands: 
+                        command_tmp = f'cd vibrations; cd {i}; srun --cpus-per-task 1 --ntasks {num_threads} {last_part}'
+                    else:
+                        command_tmp = f'cd vibrations; cd {i}; {first_part}; srun --cpus-per-task 1 --ntasks {num_threads} {last_part}'
                 else:
-                    command_tmp = f'cd vibrations; cd {i}; cd polarizability; {self.commands}'
+                    command_tmp = f'cd vibrations; cd {i}; {self.commands}'
                 command_statement.append(command_tmp)
+
+                if self.code == 'aims' and self.functional not in ['pbe', 'lda']:
+                    if number_of_cores is not None:
+                        command_tmp = f'cd vibrations; cd {i}; cd polarizability; {first_part}; srun --cpus-per-task 1 --ntasks {num_threads} {last_part}'
+                    else:
+                        command_tmp = f'cd vibrations; cd {i}; cd polarizability; {self.commands}'
+                    command_statement.append(command_tmp)
+
+                if self.dispersion and self.code == 'dftb+':
+                    if number_of_cores is not None:
+                        command_tmp = f'cd vibrations; cd {i}; cd polarizability; srun --cpus-per-task 1 --ntasks {num_threads} {last_part}'
+                    else:
+                        command_tmp = f'cd vibrations; cd {i}; cd polarizability; {self.commands}'
+                    command_statement.append(command_tmp)
 
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
             executor.map(self.run_command, command_statement)
