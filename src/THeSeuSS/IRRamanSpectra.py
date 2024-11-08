@@ -11,7 +11,7 @@ from THeSeuSS import CheckPeriodicvsNonPeriodic as pervsnonper
 
 class IntensityCalculator():
 
-    def __init__(self, code: str, eig_vec: np.ndarray, cartesian_pol: np.ndarray, pol: np.ndarray, output_file: str, no_negfreqs: int, functional: str = None):
+    def __init__(self, code: str, eig_vec: np.ndarray, cartesian_pol: np.ndarray, pol: np.ndarray, output_file: str, no_negfreqs: int, restart: bool, functional: str = None):
 
         self.code = code
         self.eig_vec = eig_vec
@@ -19,6 +19,7 @@ class IntensityCalculator():
         self.pol = pol
         self.output_file = output_file
         self.no_negfreqs = no_negfreqs
+        self.restart = restart
         self.functional = functional
         self.dispersion = None
         self.supercell = None
@@ -44,7 +45,7 @@ class IntensityCalculator():
         Setup PeriodicvsNonPeriodic class.
         """
 
-        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.commands, self.functional)
+        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
         self.non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
 
     def _read_volume(self):
@@ -52,7 +53,7 @@ class IntensityCalculator():
         Reads and returns the volume of the system if the system is periodic.
         """
 
-        central_diff = cendiff.TwoPointCentralDiff(self.code, self.output_file, self.dispersion, self.supercell, self.functional)
+        central_diff = cendiff.TwoPointCentralDiff(self.code, self.output_file, self.dispersion, self.supercell, self.restart, self.functional)
         self.volume = central_diff.get_volume()
 
     def _set_geometry_inputs(self):

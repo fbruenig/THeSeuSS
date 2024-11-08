@@ -89,7 +89,8 @@ class InputsGenerator:
         max_SCC_iterations: str = None,
         output_file: str = None,
         dispersion: bool = False,
-        dispersion_type: str = None
+        dispersion_type: str = None,
+        restart: bool = False
     ):
 
         self.code = code
@@ -112,6 +113,7 @@ class InputsGenerator:
         self.max_SCC_iterations = max_SCC_iterations
         self.output_file = output_file
         self.dispersion = dispersion
+        self.restart = restart
         self.dispersion_type = dispersion_type
         self.path = os.getcwd()
         self.species_path = os.path.abspath(__file__)
@@ -130,7 +132,7 @@ class InputsGenerator:
         Setup PeriodicvsNonPeriodic class.
         """
 
-        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.commands, self.functional)
+        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
         self.non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
 
     def _set_GeometryProcessor(self):
