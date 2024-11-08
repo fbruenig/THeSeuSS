@@ -8,11 +8,12 @@ import re
 
 class CheckOutputSuccess():
 
-    def __init__(self, code: str, output: str, dispersion: bool, functional: str = None):
+    def __init__(self, code: str, output: str, dispersion: bool, restart: bool, functional: str = None):
 
         self.code = code
         self.output = output
         self.dispersion = dispersion
+        self.restart = restart
         self.functional = functional
         self.path = os.getcwd()
         self.contents = None
@@ -80,8 +81,16 @@ class CheckOutputSuccess():
         """
 
         path_drct = os.path.join(self.path, 'vibrations', directory, self.output)
-        self._raise_output_not_exist(path_drct)
-        self._raise_output_not_successful(path_drct, pattern)
+        if self.restart:
+            if not os.path.exists(path_drct):
+                return path_drct
+            elif os.path.exists(path_drct): 
+                with open(path_drct, 'r') as f:
+                    if not pattern in f.read():
+                        return path_drct
+        else:
+            self._raise_output_not_exist(path_drct)
+            self._raise_output_not_successful(path_drct, pattern)
 
     def _check_success_pol(self, directory: str, pattern: str):
         """
@@ -91,18 +100,38 @@ class CheckOutputSuccess():
         """
 
         path_pol = os.path.join(self.path, 'vibrations', directory, 'polarizability', self.output)
-        self._raise_output_not_exist(path_pol)
-        self._raise_output_not_successful(path_pol, pattern)
+        if self.restart:
+            if not os.path.exists(path_pol):
+                return path_pol
+            elif os.path.exists(path_pol):
+                with open(path_pol, 'r') as f:
+                    if not pattern in f.read():
+                        return path_pol
+        else:
+            self._raise_output_not_exist(path_pol)
+            self._raise_output_not_successful(path_pol, pattern)
 
     def _successful_output(self, pattern: str): 
         """
         Checks if the single point calculations related to finite displacement method have been successful.
         """
-
+        
+        if self.restart:
+            not_completed_calculations = []
+        
         self._get_directories()
         for directory in self.contents:
             if directory.startswith('Coord'):
-                self._check_success(directory, pattern)
+                if self.restart:
+                    path_output = self._check_success(directory, pattern)
+                    if path_output:
+                        path_out = os.path.dirname(path_output)
+                        not_completed_calculations.append(path_out)
+                else:
+                    self._check_success(directory, pattern)
+
+        if self.restart:
+            return not_completed_calculations
 
     def _successful_output_dispersion(self, pattern: str):
         """
@@ -110,11 +139,27 @@ class CheckOutputSuccess():
         polarizability calculations have been successful.
         """
 
+        if self.restart:
+            not_completed_calculations = []
+
         self._get_directories()
         for directory in self.contents:
             if directory.startswith('Coord'):
-                self._check_success(directory, pattern)
-                self._check_success_pol(directory, pattern)
+                if self.restart:
+                    path_output = self._check_success(directory, pattern)
+                    if path_output:
+                        path_out = os.path.dirname(path_output)
+                        not_completed_calculations.append(path_out)
+                    path_output_pol = self._check_success_pol(directory, pattern)
+                    if path_output_pol:
+                        path_out_pol = os.path.dirname(path_output_pol)
+                        not_completed_calculations.append(path_out_pol)
+                else:    
+                    self._check_success(directory, pattern)
+                    self._check_success_pol(directory, pattern)
+
+        if self.restart:
+            return not_completed_calculations
 
     def check_for_success_calc_before_spectra(self):
         """
@@ -124,10 +169,26 @@ class CheckOutputSuccess():
         """
 
         if self.code == 'aims' and self.functional in ['pbe', 'lda']:
-            self._successful_output('Have a nice day.')
+            if self.restart:
+                not_completed_calcs = self._successful_output('Have a nice day.')
+            else:
+                self._successful_output('Have a nice day.')
         if self.code == 'aims' and self.functional not in ['pbe', 'lda']:
-            self._successful_output_dispersion('Have a nice day.')
+            if self.restart:
+                not_completed_calcs = self._successful_output_dispersion('Have a nice day.')
+            else:
+                self._successful_output_dispersion('Have a nice day.')
         if self.code == 'dftb+' and not self.dispersion:
-            self._successful_output('DFTB+ running times')
+            if self.restart:
+                not_completed_calcs = self._successful_output('DFTB+ running times')
+            else:
+                self._successful_output('DFTB+ running times')
         if self.code == 'dftb+' and self.dispersion:
-            self._successful_output_dispersion('DFTB+ running times')
+            if self.restart:
+                not_completed_calcs = self._successful_output_dispersion('DFTB+ running times')
+            else:
+                self._successful_output_dispersion('DFTB+ running times')
+
+        if self.restart:
+            print(not_completed_calcs)
+            return not_completed_calcs
