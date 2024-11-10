@@ -28,6 +28,7 @@ class Test_PeriodicvsNonPeriodic(unittest.TestCase):
             cell_dims='1 1 1',
             output_file='output',
             dispersion=True,
+            restart=False,
             commands='commands'
         )
 
@@ -45,6 +46,7 @@ class Test_PeriodicvsNonPeriodic(unittest.TestCase):
             cell_dims='1 1 1',
             output_file='output',
             dispersion=True,
+            restart=False,
             commands='commands'
         )
         
@@ -59,6 +61,7 @@ class Test_PeriodicvsNonPeriodic(unittest.TestCase):
             cell_dims='1 1 1',
             output_file='output',
             dispersion=True,
+            restart=False,
             commands='commands'
         )
 
@@ -76,6 +79,7 @@ class Test_PeriodicvsNonPeriodic(unittest.TestCase):
             cell_dims='1 1 1',
             output_file='output',
             dispersion=True,
+            restart=False,
             commands='commands'
         )
 
@@ -95,6 +99,7 @@ class Test_PeriodicvsNonPeriodic(unittest.TestCase):
             cell_dims='1 1 1',
             output_file='output',
             dispersion=True,
+            restart=False,
             commands='commands'
         )
 
