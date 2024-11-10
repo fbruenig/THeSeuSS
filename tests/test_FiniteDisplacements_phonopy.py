@@ -25,7 +25,7 @@ class Test_FDSubdirectoriesGeneration(unittest.TestCase):
     @patch.object(finitedisps.FDSubdirectoriesGeneration, "_drct_at_final_dest")
     def test_displacements(self, mock_drct_dest, mock_even_odd, mock_displaced_element, mock_diff_lines, mock_define_files, mock_glob, mock_move, mock_rename, mock_mkdir, mock_join, mock_listdir, mock_open):
 
-        fd_gen = finitedisps.FDSubdirectoriesGeneration(code='dftb+', kpoints='3 3 3', SCC_tolerance='1e-3', max_SCC_iterations='100', output_file='output.txt', dispersion=True, dispersion_type='MBD', functional=None, eev=None, rho=None, etot=None, forces=None, sc_iter_limit=None, species=None, pol_grid=None)
+        fd_gen = finitedisps.FDSubdirectoriesGeneration(code='dftb+', kpoints='3 3 3', SCC_tolerance='1e-3', max_SCC_iterations='100', output_file='output.txt', dispersion=True, dispersion_type='MBD', restart=False, functional=None, eev=None, rho=None, etot=None, forces=None, sc_iter_limit=None, species=None, pol_grid=None)
 
         fd_gen.path = '/current/path'
         fd_gen.axis = 'x'
@@ -57,7 +57,7 @@ class Test_FDSubdirectoriesGeneration(unittest.TestCase):
         generator_instance = MagicMock()
         mock_generator.return_value = generator_instance
 
-        fd_gen = finitedisps.FDSubdirectoriesGeneration(code='aims', kpoints='1 1 1', functional='pbe', eev='1E-5', rho='1E-7', etot='1E-6', forces='1E-4', sc_iter_limit='300', species='tight', pol_grid='10 10 10', SCC_tolerance=None, max_SCC_iterations=None, output_file='output.txt', dispersion=True, dispersion_type='TS')
+        fd_gen = finitedisps.FDSubdirectoriesGeneration(code='aims', kpoints='1 1 1', functional='pbe', eev='1E-5', rho='1E-7', etot='1E-6', forces='1E-4', sc_iter_limit='300', species='tight', pol_grid='10 10 10', SCC_tolerance=None, max_SCC_iterations=None, output_file='output.txt', dispersion=True, dispersion_type='TS', restart=False)
 
         fd_gen._displacements = MagicMock()
         fd_gen._generate_input_prms = MagicMock()
@@ -84,7 +84,7 @@ class Test_FDSubdirectoriesGeneration(unittest.TestCase):
         generator_instance = MagicMock()
         mock_generator.return_value = generator_instance
 
-        fd_gen = finitedisps.FDSubdirectoriesGeneration(code='dftb+', kpoints='1 1 1', functional=None, eev=None, rho=None, etot=None, forces=None, sc_iter_limit=None, species=None, pol_grid=None, SCC_tolerance='1E-7', max_SCC_iterations='100', output_file='output.txt', dispersion=True, dispersion_type='TS')
+        fd_gen = finitedisps.FDSubdirectoriesGeneration(code='dftb+', kpoints='1 1 1', functional=None, eev=None, rho=None, etot=None, forces=None, sc_iter_limit=None, species=None, pol_grid=None, SCC_tolerance='1E-7', max_SCC_iterations='100', output_file='output.txt', dispersion=True, dispersion_type='TS', restart=False)
 
         fd_gen._displacements = MagicMock()
         fd_gen._generate_input_prms = MagicMock()
