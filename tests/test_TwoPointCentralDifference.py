@@ -28,7 +28,7 @@ class Test_TwoPointCentralDiff(unittest.TestCase):
         mock_listdir.return_value = ['Coord_1', 'Coord_2', 'OtherFolder']
         mock_isdir.side_effect = lambda path: True
         mock_unit_cell_volume.side_effect = lambda path: setattr(self.two_point_diff, 'volume', np.float64(100.0))
-        self.two_point_diff = cendiff.TwoPointCentralDiff(code='aims', output_file='output_file.txt', dispersion=False, supercell=False)
+        self.two_point_diff = cendiff.TwoPointCentralDiff(code='aims', output_file='output_file.txt', dispersion=False, supercell=False, restart=False)
         
         result_volume = self.two_point_diff.get_volume()
 
@@ -37,7 +37,7 @@ class Test_TwoPointCentralDiff(unittest.TestCase):
     @patch('builtins.open', new_callable=mock_open, read_data="Polarizability 1.0 2.0 3.0 4.0 5.0 6.0\nTotal dipole moment 1.0 2.0 3.0\n")
     def test_find_pattern_aims_non_periodic(self, mock_open):
 
-        two_point_diff = cendiff.TwoPointCentralDiff(code='aims', output_file='output_file.txt', dispersion=False, supercell=False, functional='pbe')
+        two_point_diff = cendiff.TwoPointCentralDiff(code='aims', output_file='output_file.txt', dispersion=False, supercell=False, restart=False, functional='pbe')
         two_point_diff.non_periodic = True
 
         drcts = "mock_directory"
@@ -50,7 +50,7 @@ class Test_TwoPointCentralDiff(unittest.TestCase):
     @patch('os.path.join', side_effect=lambda *args: '/'.join(args))
     def test_find_pattern_dftb_plus(self, mock_path_join, mock_open):
         
-        two_point_diff = cendiff.TwoPointCentralDiff(code='dftb+', output_file='output_file.txt', dispersion=False, supercell=False)
+        two_point_diff = cendiff.TwoPointCentralDiff(code='dftb+', output_file='output_file.txt', dispersion=False, supercell=False, restart=False)
         two_point_diff.non_periodic = False
 
         polarizability, cartesian_polarization = two_point_diff._find_pattern('Coord_2')
@@ -62,7 +62,7 @@ class Test_TwoPointCentralDiff(unittest.TestCase):
     @patch('os.path.join', side_effect=lambda *args: '/'.join(args))
     def test_find_pattern_dftb_plus_polarizability(self, mock_path_join, mock_open):
         
-        two_point_diff = cendiff.TwoPointCentralDiff(code='dftb+', output_file='', dispersion=True, supercell=False)
+        two_point_diff = cendiff.TwoPointCentralDiff(code='dftb+', output_file='', dispersion=True, supercell=False, restart=False)
         two_point_diff.non_periodic = True
 
         polarizability, cartesian_polarization = two_point_diff._find_pattern('Coord_3')
@@ -79,7 +79,7 @@ class Test_TwoPointCentralDiff(unittest.TestCase):
     @patch('os.path.isdir', return_value=True)
     def test_subgroups_finite_disp_drct(self, mock_isdir, mock_listdir):
         
-        two_point_diff = cendiff.TwoPointCentralDiff(code='dftb+', output_file='output_file.txt', dispersion=True, supercell=False)
+        two_point_diff = cendiff.TwoPointCentralDiff(code='dftb+', output_file='output_file.txt', dispersion=True, supercell=False, restart=False)
 
         two_point_diff.path = '/current_working_directory'
         result = two_point_diff._subgroups_finite_disp_drct()
@@ -101,7 +101,7 @@ class Test_TwoPointCentralDiff(unittest.TestCase):
     @patch.object(cendiff.TwoPointCentralDiff, '_subgroups_finite_disp_drct')
     def test_pol(self, mock_subgroups, mock_map_axis, mock_find_pattern, mock_assign_axis):
         
-        two_point_diff = cendiff.TwoPointCentralDiff(code='dftb+', output_file='output_file.txt', dispersion=True, supercell=False)
+        two_point_diff = cendiff.TwoPointCentralDiff(code='dftb+', output_file='output_file.txt', dispersion=True, supercell=False, restart=False)
 
         two_point_diff.sign_atom_coord = [
             ('Coord-0-0-x-geometry.in-001_+', 'Coord-0-0-x-geometry.in-002_-')
