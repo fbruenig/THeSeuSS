@@ -55,7 +55,7 @@ class Test_Calculator(unittest.TestCase):
         mock_get_env.return_value = '4'
         commands = "echo 'Starting calculation'; run_calculation"
 
-        calc = submit.Calculator(code='aims', output_file='output', dispersion=True, commands=commands)
+        calc = submit.Calculator(code='aims', output_file='output', dispersion=True, restart=False, commands=commands)
         calc.submit_job()
 
         expected_command = "echo 'Starting calculation'; srun --cpus-per-task 1 --ntasks 4 run_calculation"
@@ -70,7 +70,7 @@ class Test_Calculator(unittest.TestCase):
         commands = "run_calculation"
 
         with patch('multiprocessing.cpu_count', return_value=8):
-            calc = submit.Calculator(code='aims', output_file='output', dispersion=True, commands=commands)
+            calc = submit.Calculator(code='aims', output_file='output', dispersion=True, restart=False, commands=commands)
             calc.submit_job()
 
             expected_command = "run_calculation"
@@ -84,7 +84,7 @@ class Test_Calculator(unittest.TestCase):
         mock_get_env.return_value = '4'
         commands = "run_calculation"
 
-        calc = submit.Calculator(code='aims', output_file='output', dispersion=True, commands=commands)
+        calc = submit.Calculator(code='aims', output_file='output', dispersion=True, restart=False, commands=commands)
         calc.submit_job()
 
         expected_command = "srun --cpus-per-task 1 --ntasks 4 run_calculation"
@@ -102,7 +102,7 @@ class Test_Calculator(unittest.TestCase):
         mock_isdir.return_value = True
         mock_subprocess_run.return_value = MagicMock(stdout='Command executed')
 
-        calc = submit.Calculator(code='dftb+', output_file='output', dispersion=True, commands="echo 'Start job'; run_calculation")
+        calc = submit.Calculator(code='dftb+', output_file='output', dispersion=True, restart=False, commands="echo 'Start job'; run_calculation")
 
         with patch.object(calc, 'run_command', wraps=calc.run_command) as mock_run_command:
             calc.submit_jobs_in_parallel()
@@ -133,7 +133,7 @@ class Test_Calculator(unittest.TestCase):
         mock_subprocess_run.return_value = MagicMock(stdout='Command executed')
 
         with patch('multiprocessing.cpu_count', return_value=4):
-            calc = submit.Calculator(code='aims', output_file='output', dispersion=False, commands="run_calculation", functional="pbe")
+            calc = submit.Calculator(code='aims', output_file='output', dispersion=False, restart=False, commands="run_calculation", functional="pbe")
 
             with patch.object(calc, 'run_command', wraps=calc.run_command) as mock_run_command:
                 calc.submit_jobs_in_parallel()
