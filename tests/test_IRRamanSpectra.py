@@ -62,7 +62,8 @@ class Test_IntensityCalculator(unittest.TestCase):
             cartesian_pol=self.cartesian_pol,
             pol=self.pol,
             output_file=self.output_file,
-            no_negfreqs=self.no_negfreqs
+            no_negfreqs=self.no_negfreqs,
+            restart=False
         )
 
         intensity_calculator.IRintensity()
@@ -89,7 +90,8 @@ class Test_IntensityCalculator(unittest.TestCase):
             cartesian_pol=self.cartesian_pol,
             pol=self.pol,
             output_file=self.output_file,
-            no_negfreqs=self.no_negfreqs
+            no_negfreqs=self.no_negfreqs,
+            restart=False
         )
 
         intensity_calculator.IRintensity()
@@ -117,7 +119,8 @@ class Test_IntensityCalculator(unittest.TestCase):
             cartesian_pol=self.cartesian_pol,
             pol=self.pol,
             output_file=self.output_file,
-            no_negfreqs=self.no_negfreqs
+            no_negfreqs=self.no_negfreqs,
+            restart=False
         )
 
         intensity_calculator.Ramanactivity()
