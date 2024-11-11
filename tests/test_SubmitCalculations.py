@@ -148,3 +148,38 @@ class Test_Calculator(unittest.TestCase):
 
                 mock_run_command.assert_has_calls([call(cmd) for cmd in expected_commands], any_order=True)
                 self.assertEqual(mock_run_command.call_count, len(expected_commands))
+
+    @patch('subprocess.run')
+    @patch('THeSeuSS.Restart.RestartCalculation')
+    @patch('os.environ.get')
+    def test_submit_jobs_in_parallel_with_restart(self, mock_get_env, mock_restart, mock_subprocess_run):
+
+        mock_get_env.return_value = '8'
+
+        mock_restart_instance = mock_restart.return_value
+        mock_restart_instance.directory_non_completed_calculations.return_value = [
+            'Coord-0-0-x-geometry.in-001_+/polarizability',
+            'Coord-1-0-y-geometry.in-004_-',
+            'Coord-0-0-x-geometry.in-002_-',
+            'Coord-1-0-y-geometry.in-003_+/polarizability'
+        ]
+
+        mock_subprocess_run.return_value = MagicMock(stdout='Command executed')
+
+        calc = submit.Calculator(code='aims', output_file='output', dispersion=False, restart=True, commands="echo 'Start job'; run_calculation")
+
+        with patch.object(calc, 'run_command', wraps=calc.run_command) as mock_run_command:
+            calc.submit_jobs_in_parallel()
+
+            expected_commands = [
+                "cd Coord-0-0-x-geometry.in-001_+/polarizability; echo 'Start job'; srun --cpus-per-task 1 --ntasks 2 run_calculation",
+                "cd Coord-0-0-x-geometry.in-002_-; echo 'Start job'; srun --cpus-per-task 1 --ntasks 2 run_calculation",
+                "cd Coord-1-0-y-geometry.in-003_+/polarizability; echo 'Start job'; srun --cpus-per-task 1 --ntasks 2 run_calculation",
+                "cd Coord-1-0-y-geometry.in-004_-; echo 'Start job'; srun --cpus-per-task 1 --ntasks 2 run_calculation"
+            ]
+
+            mock_run_command.assert_has_calls([call(cmd) for cmd in expected_commands], any_order=True)
+            self.assertEqual(mock_run_command.call_count, len(expected_commands))
+
+            mock_restart.assert_called_once_with('aims', 'output', False, True, None, "echo 'Start job'; run_calculation")
+            mock_restart_instance.directory_non_completed_calculations.assert_called_once()
