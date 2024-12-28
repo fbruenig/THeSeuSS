@@ -203,7 +203,7 @@ class FDSubdirectoriesGeneration():
         for i in contents:
             if self.input_file_name in i:
                 contents_list.append(i)
-        contents_list = sorted(contents_list)
+        contents_list = sorted(contents_list, key=lambda x: int(re.search(r'\d+', x).group()))
         self.chunk = [contents_list[x:x+2] for x in range(0, len(contents_list), 2)]
 
     def _drct_at_final_dest(self, index: int, namefile: str):
