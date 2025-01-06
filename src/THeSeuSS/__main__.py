@@ -113,6 +113,8 @@ def main(
         check_calculator.check_for_success_calc_before_spectra()
         eigvecs, eigvals, freq, no_neg_freqs = check_periodic_non_periodic.eigenvec_eigenval_freq()
 
+        phonopy_calculator.animate_eigenvectors()
+
         central_diff = cendiff.TwoPointCentralDiff(code, output_file, dispersion, supercell, restart, functional)
         pol, cartesian_pol = central_diff.pol_cart_pol_processor()
 
