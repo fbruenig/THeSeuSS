@@ -222,6 +222,21 @@ class PhonopyCalculator:
 
         return self.dynamical_matrix
 
+    def animate_eigenvectors(self):
+        """
+        Creates the xyz_jmol file to animate the vibrations using jmol package.
+        """
+        
+        dyn_mat = self.disp_forces_dataset_dyn_matrix()
+        q = [0.0,0.0,0.0]
+        anime_type='jmol'
+        band_index=0
+        amplitude=5
+        num_div=0
+        shift=[0.0,0.0,0.0]
+        filename='anime.xyz'
+        self.phonon.write_animation(q, anime_type, band_index, amplitude, num_div, shift, filename)
+
     def plot_band_structure(self):
         """
         Plots the band structure using predefined paths in reciprocal space.
