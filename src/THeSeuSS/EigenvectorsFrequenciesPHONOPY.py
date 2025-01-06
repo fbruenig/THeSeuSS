@@ -264,6 +264,9 @@ class VibrationalFrequencies():
             conversion_factor_to_cm_minus_1 = 154.10794*33.356
 
         frequencies_THz = frequencies * conversion_factor_to_THz
+        print(f'FREQUENCIES (THz)')
+        print(f'{frequencies_THz}')
+
         frequencies_in_cm_minus_1 = frequencies * conversion_factor_to_cm_minus_1
 
         return eigvecs, eigvals, frequencies_in_cm_minus_1
