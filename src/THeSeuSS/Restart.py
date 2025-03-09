@@ -9,7 +9,7 @@ from THeSeuSS import SubmitCalculations as submit
 
 class RestartCalculation():
 
-    def __init__(self, code: str, output: str, dispersion: bool, restart: bool, functional: str=None, commands: str=None):
+    def __init__(self, code: str, output: str, dispersion: bool, restart: bool, functional: str=None, commands: str=None, cell_dims: str=None):
 
         self.code = code
         self.output = output
@@ -17,6 +17,7 @@ class RestartCalculation():
         self.restart = restart
         self.functional = functional
         self.commands = commands
+        self.cell_dims = cell_dims
         self.not_completed_calcs = None
         self._initialization_of_checkoutputsuccess()
         self._initialization_of_submitcalculations()
@@ -42,7 +43,7 @@ class RestartCalculation():
         Setup the Calculator class.             
         """
 
-        self.calc = submit.Calculator(self.code, self.output, self.dispersion, self.restart, self.functional, self.commands)
+        self.calc = submit.Calculator(self.code, self.output, self.dispersion, self.restart, self.functional, self.commands, self.cell_dims)
 
     def restart_calculations(self):
         """
