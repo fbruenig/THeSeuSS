@@ -15,7 +15,7 @@ class Test_VibrationalFrequencies(unittest.TestCase):
     @patch.object(eigenvec.VibrationalFrequencies, '_get_forces', side_effect=lambda path: [0.1, -0.2, 0.3] if '001' in path else [-0.1, 0.2, -0.3])
     def test_set_forces_dictionary(self, mock_get_number_of_atoms, mock_get_sorted_directories, mock_forces_output_path, mock_get_forces):
         
-        vib_freq = eigenvec.VibrationalFrequencies(code='aims', output_file_of_SCFSs='output', dispersion=True)
+        vib_freq = eigenvec.VibrationalFrequencies(code='aims', output_file_of_SCFSs='output', dispersion=True, cell_dims = None, restart=False, commands = None, functional = None)
         vib_freq.displacement = 0.01
         vib_freq._set_forces_dictionary()
 
@@ -42,7 +42,7 @@ class Test_VibrationalFrequencies(unittest.TestCase):
     @patch.object(eigenvec.VibrationalFrequencies, '_set_forces_dictionary')
     def test_group_dispplacement_forces_dict(self, mock_set_forces_dictionary):
         
-        vib_freq = eigenvec.VibrationalFrequencies(code='aims', output_file_of_SCFSs='output', dispersion=True)
+        vib_freq = eigenvec.VibrationalFrequencies(code='aims', output_file_of_SCFSs='output', dispersion=True, cell_dims = None, restart=False, commands = None, functional = None)
         vib_freq.no_of_atoms = 2
 
         vib_freq.dataset = {
@@ -86,7 +86,7 @@ class Test_VibrationalFrequencies(unittest.TestCase):
     def test_mass_matrix(self, mock_get_atom_type, mock_element):
         
         mock_element.side_effect = lambda el: MagicMock(atomic_weight=1.008 if el == 'H' else 15.999)
-        vib_freq = eigenvec.VibrationalFrequencies(code='aims', output_file_of_SCFSs='output', dispersion=True)
+        vib_freq = eigenvec.VibrationalFrequencies(code='aims', output_file_of_SCFSs='output', dispersion=True, cell_dims = None, restart=False, commands = None, functional = None)
         vib_freq.no_of_atoms = 2
 
         d_forces = {
@@ -118,7 +118,7 @@ class Test_VibrationalFrequencies(unittest.TestCase):
 
     def test_generation_of_fc_matrix(self):
         
-        vib_freq = eigenvec.VibrationalFrequencies(code='aims', output_file_of_SCFSs='output', dispersion=True)
+        vib_freq = eigenvec.VibrationalFrequencies(code='aims', output_file_of_SCFSs='output', dispersion=True, cell_dims = None, restart=False, commands = None, functional = None)
         vib_freq.no_of_atoms = 3
 
         dforces = {
@@ -170,7 +170,7 @@ class Test_VibrationalFrequencies(unittest.TestCase):
 
     def test_symmetrization_of_fc_matrix(self):
         
-        vib_freq = eigenvec.VibrationalFrequencies(code='aims', output_file_of_SCFSs='output', dispersion=True)
+        vib_freq = eigenvec.VibrationalFrequencies(code='aims', output_file_of_SCFSs='output', dispersion=True, cell_dims = None, restart=False, commands = None, functional = None)
         vib_freq.no_of_atoms = 3
 
         force_constants = np.array([[6.22941796e+01, -5.91748872e-11, 3.04236421e-27, -3.11470898e+01, 2.42396861e+01, 3.04236421e-27, -3.11470898e+01, -2.42396861e+01, 3.04236421e-27],
@@ -199,7 +199,7 @@ class Test_VibrationalFrequencies(unittest.TestCase):
 
     def test_read_eig_vec_phonopy(self):
         
-        vib_freq = eigenvec.VibrationalFrequencies(code='aims', output_file_of_SCFSs='output', dispersion=True)
+        vib_freq = eigenvec.VibrationalFrequencies(code='aims', output_file_of_SCFSs='output', dispersion=True, cell_dims = None, restart=False, commands = None, functional = None)
 
         hessian = np.array([[3.89362957e+00, -2.08341250e-12, 1.63840577e-13, -7.75609265e+00, 6.03480475e+00, -1.47982657e-12, -7.75609265e+00, -6.03480475e+00, -5.82754507e-13],
             [-2.08341250e-12, 2.60014981e+00, 1.05014390e-12, 4.61521750e+00, -5.17950492e+00, -1.73746225e-11, -4.61521750e+00, -5.17950492e+00, -1.61809072e-12],
