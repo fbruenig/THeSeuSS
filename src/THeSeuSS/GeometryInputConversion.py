@@ -21,7 +21,15 @@ class GeometryConversion():
         """
 
         self.atoms = read(input_cif_name, format='cif')
-    
+
+    def aims_geom_input_to_extxyz(self, input_aims_name, extxyz_file_name):
+        """
+        Retrieve the structure from a file of geometry.in aims file.
+        """
+
+        self.atoms = read(input_aims_name, format='aims')
+        write(extxyz_file_name, self.atoms, format='extxyz')
+
     def _write_structure(self):
         """
         Generate the geometry input file in either FHIaims or DFTB+ format.
@@ -31,6 +39,8 @@ class GeometryConversion():
             write('geometry.in', self.atoms, format='aims')
         elif self.code == 'dftb+':
             write('geo.gen', self.atoms, format='dftb')
+        elif self.code == 'so3lr':
+            write('so3lr.xyz', self.atoms, format='extxyz')
 
     def check_cif_file(self):
         """
