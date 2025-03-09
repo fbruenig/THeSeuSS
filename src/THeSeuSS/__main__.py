@@ -57,9 +57,9 @@ def main(
         restart: bool
 ):
 
-    calculator = submit.Calculator(code, output_file, dispersion, restart, functional, commands)
+    calculator = submit.Calculator(code, output_file, dispersion, restart, functional, commands, cell_dims)
     check_calculator = check.CheckOutputSuccess(code, output_file, dispersion, restart, functional)
-    phonopy_calculator = submit.PhonopyCalculator(code, cell_dims, output_file)
+    phonopy_calculator = submit.PhonopyCalculator(code, cell_dims, output_file, dispersion, restart, commands, functional)
 
 
     message = 'Input'
@@ -84,12 +84,15 @@ def main(
         print(f'DIMENSIONS OF SUPERCELL: {cell_dims}')
 
     if cell_geometry_optimization:
-        generator = inputfiles.InputsGenerator(code, kpoints, functional, eev, rho, etot, forces, sc_iter_limit, species,
-            False, geometry, energy, steps, None, max_force_component, max_steps, SCC_tolerance, max_SCC_iterations, 
-            output_file, dispersion, dispersion_type, restart)
-        generator.file_exists()
-        calculator.submit_job()
-        check_periodic_non_periodic.periodic_space_group_calc()
+        if code == 'aims' or code == 'dftb+':
+            generator = inputfiles.InputsGenerator(code, kpoints, functional, eev, rho, etot, forces, sc_iter_limit, species,
+                False, geometry, energy, steps, None, max_force_component, max_steps, SCC_tolerance, max_SCC_iterations, 
+                output_file, dispersion, dispersion_type, restart)
+            generator.file_exists()
+            calculator.submit_job()
+            check_periodic_non_periodic.periodic_space_group_calc()
+        elif code == 'so3lr':
+            calculator.submit_geometry_opt_so3lr()
 
     if submission_cell:
         check_periodic_non_periodic.decision_submission_cell()
@@ -99,30 +102,37 @@ def main(
                 sc_iter_limit, species, pol_grid, SCC_tolerance, max_SCC_iterations, output_file, dispersion, dispersion_type, restart)
         files_prep.iterate_over_files()
 
-        FHIaims_calculator = submit.Calculator(code, output_file, dispersion, restart, functional, commands)
-        FHIaims_calculator.submit_jobs_in_parallel()
+        if code == 'aims' or code == 'dftb+':
+            FHIaims_calculator = submit.Calculator(code, output_file, dispersion, restart, functional, commands, cell_dims)
+            FHIaims_calculator.submit_jobs_in_parallel()
+        elif code == 'so3lr':
+            calculator.energy_forces_so3lr()
 
     if plot_bands:
         phonopy_calculator.plot_band_structure()
 
     if restart:
-        rst_calc = rst.RestartCalculation(code, output_file, dispersion, restart, functional, commands)
+        rst_calc = rst.RestartCalculation(code, output_file, dispersion, restart, functional, commands, dimensions)
         rst_calc.restart_calculations()
 
     if spectra_calculation:
         check_calculator.check_for_success_calc_before_spectra()
         eigvecs, eigvals, freq, no_neg_freqs = check_periodic_non_periodic.eigenvec_eigenval_freq()
 
-        phonopy_calculator.animate_eigenvectors()
+        if not non_periodic:
+            phonopy_calculator.animate_eigenvectors()
+        else:
+            pass
 
-        central_diff = cendiff.TwoPointCentralDiff(code, output_file, dispersion, supercell, restart, functional)
-        pol, cartesian_pol = central_diff.pol_cart_pol_processor()
+        if code == 'aims' or code == 'dftb+':
+            central_diff = cendiff.TwoPointCentralDiff(code, output_file, dispersion, supercell, restart, functional)
+            pol, cartesian_pol = central_diff.pol_cart_pol_processor()
 
-        intensities_calculator = spectra.IntensityCalculator(code, eigvecs, cartesian_pol, pol, output_file, no_neg_freqs, restart, functional)
-        IRintensity, Ramanactivity = intensities_calculator.spectra_calculation()
+            intensities_calculator = spectra.IntensityCalculator(code, eigvecs, cartesian_pol, pol, output_file, no_neg_freqs, restart, functional)
+            IRintensity, Ramanactivity = intensities_calculator.spectra_calculation()
 
-        plot_vibrational_spectra = plots.SpectraPlotter(freq, IRintensity, Ramanactivity, broadening, fwhm)
-        plot_vibrational_spectra.plot_spectra()
+            plot_vibrational_spectra = plots.SpectraPlotter(freq, IRintensity, Ramanactivity, broadening, fwhm)
+            plot_vibrational_spectra.plot_spectra()
 
         print('*' * 150) 
 
