@@ -6,6 +6,8 @@ enabling the subsequent calculation of molecular vibrational frequencies.'''
 import numpy as np
 from THeSeuSS import InputsPreparation as inputs
 from itertools import chain
+from ase import Atoms
+from ase.io.extxyz import write_extxyz
 import shutil, os
 from collections import OrderedDict
 
@@ -14,6 +16,7 @@ class GenerateDisplacements():
 
     GEOMETRY_IN = 'vibrations/geometry.in'
     GEO_GEN = 'vibrations/geo.gen'
+    SO3LR = 'so3lr.xyz'
 
     def __init__(self, code: str):
 
@@ -33,6 +36,8 @@ class GenerateDisplacements():
             geom_input = GenerateDisplacements.GEOMETRY_IN
         elif self.code == 'dftb+':
             geom_input = GenerateDisplacements.GEO_GEN
+        elif self.code == 'so3lr':
+            geom_input = GenerateDisplacements.SO3LR
 
         self.geometry_processor = inputs.GeometryProcessor(geom_input, self.code)
 
@@ -67,6 +72,8 @@ class GenerateDisplacements():
             self.disp = 0.01
         elif self.code == 'dftb+':
             self.disp = 0.005
+        elif self.code == 'so3lr':
+            self.disp = 0.01
 
     def _name_displaced_input(self, index: int):
         """
@@ -77,6 +84,8 @@ class GenerateDisplacements():
             self.disp_inp = f'geometry.in-{index:03d}'
         elif self.code == 'dftb+':
             self.disp_inp = f'geo.genS-{index:03d}'
+        elif self.code == 'so3lr':
+            self.disp_inp = f'so3lr-{index:03d}.xyz'
 
     def _generate_displaced_input(self, coord: list):
         """
@@ -88,22 +97,29 @@ class GenerateDisplacements():
         numbers, types = self._get_atom_type()
         line = ''
 
-        path_of_disp_str = os.path.join(self.path, 'vibrations', self.disp_inp) 
-        with open(path_of_disp_str, 'w') as fh:
-            if self.code == 'aims':
-                for row, type_ in zip(coord, types):
-                    coordinates_str = ' '.join([f'{coord}' for coord in row])
-                    line += f'atom {coordinates_str} {type_}\n'
-                fh.write(line)
-            elif self.code == 'dftb+':
-                fh.write(f'{no_of_atoms} C\n')
-                list_types = list(OrderedDict.fromkeys(types))
-                types_str = ' '.join(list_types)
-                fh.write(f'{types_str}\n')
-                for i, row, no_type in zip(range(1, no_of_atoms+1), coord, numbers):
-                    coordinates_str = ' '.join([f'{coord}' for coord in row])
-                    line += f' {i} {no_type} {coordinates_str}\n' 
-                fh.write(line)
+        if self.code != 'so3lr':
+            path_of_disp_str = os.path.join(self.path, 'vibrations', self.disp_inp) 
+            with open(path_of_disp_str, 'w') as fh:
+                if self.code == 'aims':
+                    for row, type_ in zip(coord, types):
+                        coordinates_str = ' '.join([f'{coord}' for coord in row])
+                        line += f'atom {coordinates_str} {type_}\n'
+                    fh.write(line)
+                elif self.code == 'dftb+':
+                    fh.write(f'{no_of_atoms} C\n')
+                    list_types = list(OrderedDict.fromkeys(types))
+                    types_str = ' '.join(list_types)
+                    fh.write(f'{types_str}\n')
+                    for i, row, no_type in zip(range(1, no_of_atoms+1), coord, numbers):
+                        coordinates_str = ' '.join([f'{coord}' for coord in row])
+                        line += f' {i} {no_type} {coordinates_str}\n' 
+                    fh.write(line)
+        else:
+            atoms = Atoms(symbols = types,
+                    positions = coord,
+                    pbc = False)
+            with open(self.disp_inp, 'w') as file_for_ML:
+                write_extxyz(file_for_ML, atoms)
 
     def _create_supercell_file(self):
         """
@@ -119,9 +135,10 @@ class GenerateDisplacements():
             geom_inp = 'geo.gen'
             geom_inp_supercell = 'geo.genS'
 
-        path_geom_inp = os.path.join(self.path, 'vibrations', geom_inp)
-        path_geom_inp_supercell = os.path.join(self.path, 'vibrations', geom_inp_supercell)
-        shutil.copy(path_geom_inp, path_geom_inp_supercell)
+        if self.code == 'aims' or self.code == 'dftb+':
+            path_geom_inp = os.path.join(self.path, 'vibrations', geom_inp)
+            path_geom_inp_supercell = os.path.join(self.path, 'vibrations', geom_inp_supercell)
+            shutil.copy(path_geom_inp, path_geom_inp_supercell)
 
     def create_the_displaced_structures(self):
         """
