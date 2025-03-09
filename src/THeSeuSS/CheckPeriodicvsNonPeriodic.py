@@ -47,12 +47,12 @@ class PeriodicvsNonPeriodic():
         """
         
         self.spglib_processor = MapAtoms.spglibProcessor(self.code)
-        self.phonopy_calculator = submit.PhonopyCalculator(self.code, self.cell_dims, self.output_file)
+        self.phonopy_calculator = submit.PhonopyCalculator(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
         self.geometry_conversion = geominput.GeometryConversion(self.code)
         self.generated_displacements_mol = dispsmolecules.GenerateDisplacements(self.code)
         self.check_calculator = check.CheckOutputSuccess(self.code, self.output_file, self.dispersion, self.functional)
-        self.calculator = submit.Calculator(self.code, self.output_file, self.dispersion, self.restart, self.functional, self.commands)
-        self.vibrational_freq = eigenvec.VibrationalFrequencies(self.code, self.output_file, self.dispersion)
+        self.calculator = submit.Calculator(self.code, self.output_file, self.dispersion, self.restart, self.functional, self.commands, self.cell_dims)
+        self.vibrational_freq = eigenvec.VibrationalFrequencies(self.code, self.output_file, self.dispersion, self.cell_dims, self.restart, self.commands, self.functional)
 
     def _specify_geometry_inputs(self):
         """
@@ -63,6 +63,8 @@ class PeriodicvsNonPeriodic():
             self.geom_input = 'geometry.in'
         elif self.code == 'dftb+':
             self.geom_input = 'geo.gen'
+        elif self.code == 'so3lr':
+            self.geom_input = 'so3lr.xyz'
 
     def check_periodic_vs_non_periodic(self)-> bool:
         """
@@ -83,6 +85,9 @@ class PeriodicvsNonPeriodic():
                         if len(columns) == 3:
                             self.non_periodic = False
                             break
+                    elif self.code == 'so3lr' and 'Lattice' in line:
+                        self.non_periodic = False
+                        break
         return self.non_periodic
 
     def print_periodic_vs_non_periodic(self):
@@ -106,8 +111,9 @@ class PeriodicvsNonPeriodic():
 
         if not self.non_periodic:
             self.geometry_conversion.check_cif_file()
-            initial_space_group = self.spglib_processor.get_international_space_group_number(self.path)
-            print(f'INTERNATIONAL SPACE GROUP NUMBER OF THE EXPERIMENTAL STRUCTURE: {initial_space_group}\n')
+            if self.code == 'aims' or self.code == 'dftb+':
+                initial_space_group = self.spglib_processor.get_international_space_group_number(self.path)
+                print(f'INTERNATIONAL SPACE GROUP NUMBER OF THE EXPERIMENTAL STRUCTURE: {initial_space_group}\n')
         else:
             pass
 
@@ -132,13 +138,14 @@ class PeriodicvsNonPeriodic():
         if flag_exit:
             exit()
         else:
-            if not self.non_periodic:
-                self.calculator.frozen_phonon_approximation_drct()
-                source_path = os.path.join(self.path, 'vibrations')
-                space_group_of_optimized_str = self.spglib_processor.get_international_space_group_number(source_path)
-                print(f'INTERNATIONAL SPACE GROUP NUMBER OF THE OPTIMIZED STRUCTURE: {space_group_of_optimized_str}\n')
-            else:
-                self.calculator.frozen_phonon_approximation_drct()
+            if self.code == 'aims' or self.code == 'dftb+':
+                if not self.non_periodic:
+                    self.calculator.frozen_phonon_approximation_drct()
+                    source_path = os.path.join(self.path, 'vibrations')
+                    space_group_of_optimized_str = self.spglib_processor.get_international_space_group_number(source_path)
+                    print(f'INTERNATIONAL SPACE GROUP NUMBER OF THE OPTIMIZED STRUCTURE: {space_group_of_optimized_str}\n')
+                else:
+                    self.calculator.frozen_phonon_approximation_drct()
 
     def dyn_mat_for_eigvec_eig_val_freq(self):
         """
