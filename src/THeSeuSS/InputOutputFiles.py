@@ -15,6 +15,7 @@ class InputsGenerator:
 
     GEOMETRY_IN = 'geometry.in'
     GEO_GEN = 'geo.gen'
+    SO3LR_GEN = 'so3lr.xyz'
 
     '''Generation of FHIaims and DFTB+ inputs.
 
@@ -144,6 +145,8 @@ class InputsGenerator:
             geom_input = InputsGenerator.GEOMETRY_IN
         elif self.code == 'dftb+':
             geom_input = InputsGenerator.GEO_GEN
+        elif self.code == 'so3lr':
+            geom_input = InputsGenerator.SO3LR_GEN
         
         self.geometry_processor = inputs.GeometryProcessor(geom_input, self.code)
 
@@ -177,7 +180,7 @@ class InputsGenerator:
     def _check_coord_directories_existence(self)-> bool:
         """
         Checks for the existence of directories starting with "Coord" in the current directory.
-        It is used in order to decide in the control.in input file of FHIaims is the commands
+        It is used in order to decide in the control.in input file of FHIaims if the commands
         for the calculation of polarizability and dipole moment will be added. It is only for non_periodic systems.
         """
 
