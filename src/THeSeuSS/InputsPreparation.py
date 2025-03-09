@@ -3,6 +3,8 @@
 #AUTHOR: Ariadni Boziki
 
 import re
+from ase import Atoms
+from ase.io import read
 
 
 class GeometryProcessor():
@@ -41,6 +43,11 @@ class GeometryProcessor():
                     no_of_columns = len(lines.split())
                     if no_of_columns == 5:
                         index += 1
+
+        if self.code == 'so3lr':
+            geometry_input = open(self.geom_input,'r')
+            first_line = geometry_input.readline()
+            index = int(first_line)
         return index
 
     def read_lattice(self)-> list:
@@ -67,6 +74,11 @@ class GeometryProcessor():
                     cell_tmp = line.split()
                     cell_tmp_float = [float(s.replace(',','')) for s in cell_tmp]
                     cell.append(cell_tmp_float)
+
+            elif self.code == 'so3lr':
+                atoms = read('so3lr.xyz')
+                cell = atoms.get_cell()
+
         return cell
 
     def read_coordinates(self)-> list:
@@ -95,6 +107,11 @@ class GeometryProcessor():
                         coord_tmp = lines.split()[2:5]
                         coord_tmp_float = [float(s.replace(',','')) for s in coord_tmp]
                         coord.append(coord_tmp_float)
+
+            elif self.code == 'so3lr':
+                atoms = read('so3lr.xyz')
+                coord = atoms.get_positions()
+
         return coord
 
     def read_the_atom_type(self)-> [list, list]:
@@ -145,4 +162,18 @@ class GeometryProcessor():
                         ll = int(jj)
                         if kk is ll:
                             atom_type.append(atom_types_tmp_dftb[ii])
+            
+        if self.code == 'so3lr':
+            atoms = read(self.geom_input)
+            atom_type = atoms.get_chemical_symbols()
+
+            atom_dict = {}
+
+            counter = 1
+            for atom in atom_type:
+                if atom not in atom_dict:
+                    atom_dict[atom] = counter
+                    counter += 1
+                atom_type_no.append(atom_dict[atom])
+
         return atom_type_no, atom_type
