@@ -16,14 +16,26 @@ class VibrationalFrequencies():
 
     GEOMETRY_IN = 'geometry.in'
     GEO_GEN = 'geo.gen'
+    SO3LR = 'so3lr.xyz'
 
-    def __init__(self, code: str, output_file_of_SCFSs: str, dispersion: bool):
+    def __init__(
+        self, 
+        code: str, 
+        output_file_of_SCFSs: str, 
+        dispersion: bool,
+        cell_dims: str,
+        restart: bool,
+        commands: str,
+        functional: str
+    ):
 
         self.code = code
         self.output_file_of_SCFSs = output_file_of_SCFSs
         self.dispersion = dispersion
-        self.cell_dims = None
-        self.commands = None
+        self.cell_dims = cell_dims
+        self.restart = restart
+        self.commands = commands
+        self.functional = functional
         self.geometry_processor = None
         self.no_of_atoms = None
         self.phonopy_calculator = None
@@ -46,6 +58,8 @@ class VibrationalFrequencies():
             geom_input = VibrationalFrequencies.GEOMETRY_IN
         elif self.code == 'dftb+':
             geom_input = VibrationalFrequencies.GEO_GEN
+        elif self.code == 'so3lr':
+            geom_input = VibrationalFrequencies.SO3LR
 
         self.geometry_processor = inputs.GeometryProcessor(geom_input, self.code)
 
@@ -54,7 +68,7 @@ class VibrationalFrequencies():
         Setup the PhonopyCalculator class.
         """
 
-        self.phonopy_calculator = submit.PhonopyCalculator(self.code, self.cell_dims, self.output_file_of_SCFSs)
+        self.phonopy_calculator = submit.PhonopyCalculator(self.code, self.cell_dims, self.output_file_of_SCFSs, self.dispersion, self.restart, self.commands, self.functional)
 
     def _get_number_of_atoms(self)-> int:
         """
@@ -83,7 +97,10 @@ class VibrationalFrequencies():
         Returns the forces from the FHIaims output and results.tag DFTB+ file 
         """
 
-        return self.phonopy_calculator.read_forces_from_output(output_path)
+        if self.code == 'aims' or self.code == 'dftb+':
+            return self.phonopy_calculator.read_forces_from_output(output_path)
+        elif self.code == 'so3lr':
+            return self.phonopy_calculator.read_forces_from_files_ML(output_path)
 
     def _get_sorted_directories(self)-> list:
         """
@@ -103,6 +120,8 @@ class VibrationalFrequencies():
             self.displacement = 0.01
         elif self.code == 'dftb+':
             self.displacement = 0.005
+        if self.code == 'so3lr':
+            self.displacement = 0.01
 
     def _set_forces_dictionary(self):
         """
@@ -110,10 +129,9 @@ class VibrationalFrequencies():
         """
 
         self.no_of_atoms = self._get_number_of_atoms()
-        self.conts = self._get_sorted_directories()
-
         self.dataset = {'natom': self.no_of_atoms,
                 'atoms': []}
+        self.conts = self._get_sorted_directories()
 
         for i in self.conts:
             output_path = self._forces_output_path(i)
@@ -154,6 +172,9 @@ class VibrationalFrequencies():
                     elif self.code == 'dftb+':
                         forces_pos = np.array(next(atom['forces'] for atom in (atom_i, atom_j) if atom['disp'] == 0.005))
                         forces_neg = np.array(next(atom['forces'] for atom in (atom_i, atom_j) if atom['disp'] == -0.005))
+                    elif self.code == 'so3lr':
+                        forces_pos = np.array(next(atom['forces'] for atom in (atom_i, atom_j) if atom['disp'] == 0.01))
+                        forces_neg = np.array(next(atom['forces'] for atom in (atom_i, atom_j) if atom['disp'] == -0.01))
                     delta_forces_entry = {
                         'number': atom_i['atom_number'],
                         'axis': atom_i['atom_axis'],
@@ -262,6 +283,10 @@ class VibrationalFrequencies():
         if self.code == 'dftb+':
             conversion_factor_to_THz = 154.10794
             conversion_factor_to_cm_minus_1 = 154.10794*33.356
+
+        if self.code == 'so3lr':
+            conversion_factor_to_THz = 15.633302
+            conversion_factor_to_cm_minus_1 = 15.633302*33.356
 
         frequencies_THz = frequencies * conversion_factor_to_THz
         print(f'FREQUENCIES (THz)')
