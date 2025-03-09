@@ -42,7 +42,7 @@ class Test_PhonopyCalculator(unittest.TestCase):
         mock_listdir.return_value = directory_names
         mock_isdir.return_value = True
 
-        calc = submit.PhonopyCalculator(code='aims', cell_dims='2 2 2', output_file_of_SCFSs='output')
+        calc = submit.PhonopyCalculator(code='aims', cell_dims='2 2 2', output_file_of_SCFSs='output', dispersion=False, restart=False, commands=None, functional=None)
         sorted_directories = calc.sort_directories()
         self.assertEqual(sorted_directories, expected_sorted_directories)
 
@@ -166,7 +166,7 @@ class Test_Calculator(unittest.TestCase):
 
         mock_subprocess_run.return_value = MagicMock(stdout='Command executed')
 
-        calc = submit.Calculator(code='aims', output_file='output', dispersion=False, restart=True, commands="echo 'Start job'; run_calculation")
+        calc = submit.Calculator(code='aims', output_file='output', dispersion=False, restart=True, commands="echo 'Start job'; run_calculation", cell_dims=None)
 
         with patch.object(calc, 'run_command', wraps=calc.run_command) as mock_run_command:
             calc.submit_jobs_in_parallel()
@@ -181,5 +181,5 @@ class Test_Calculator(unittest.TestCase):
             mock_run_command.assert_has_calls([call(cmd) for cmd in expected_commands], any_order=True)
             self.assertEqual(mock_run_command.call_count, len(expected_commands))
 
-            mock_restart.assert_called_once_with('aims', 'output', False, True, None, "echo 'Start job'; run_calculation")
+            mock_restart.assert_called_once_with('aims', 'output', False, True, None, "echo 'Start job'; run_calculation", None)
             mock_restart_instance.directory_non_completed_calculations.assert_called_once()
