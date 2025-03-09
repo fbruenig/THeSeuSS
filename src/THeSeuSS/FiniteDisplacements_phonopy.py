@@ -76,6 +76,8 @@ class FDSubdirectoriesGeneration():
             line = line.split()[1:4]
         if self.code == 'dftb+':
             line = line.split()[2:5]
+        if self.code == 'so3lr':
+            line = line.split()[1:4]
         list_line_tmp = [float(i) for i in line]
         list_line = [float("{0:0.3f}".format(i)) for i in list_line_tmp]
 
@@ -104,6 +106,8 @@ class FDSubdirectoriesGeneration():
             value_disp = 0.02
         if self.code == 'dftb+':
             value_disp = 0.01
+        if self.code == 'so3lr':
+            value_disp = 0.02
 
         if diff_1 == value_disp:
             self.axis = 'x'
@@ -153,16 +157,24 @@ class FDSubdirectoriesGeneration():
                 number = 0
             elif self.code == 'dftb+':
                 number = 2
+        if self.code == 'so3lr':
+            number = 2
         self.no_of_element = no_of_line - number
 
     def _create_dir(self, i: str, index: int):
         """
         Creation of folders.
         """
-       
-        os.chdir('vibrations')
+      
+        if self.code == 'aims' or self.code == 'dftb+':
+            os.chdir('vibrations')
+        elif self.code == 'so3lr':
+            pass
         os.mkdir(f'Coord-{index}-{self.no_of_element}-{self.axis}-{i}_{self.sign}')
-        os.chdir('../')
+        if self.code == 'aims' or self.code == 'dftb+':
+            os.chdir('../')
+        elif self.code == 'so3lr':
+            pass
 
     def _rename(self, filename_path: str, name_path: str):
         """
@@ -198,12 +210,18 @@ class FDSubdirectoriesGeneration():
         """
 
         dir_path = os.path.join(self.path, 'vibrations')
-        contents = os.listdir(dir_path)
+        if self.code == 'aims' or self.code == 'dftb+':
+            contents = os.listdir(dir_path)
+        elif self.code == 'so3lr':
+            contents = os.listdir(self.path)
         contents_list = []
         for i in contents:
             if self.input_file_name in i:
                 contents_list.append(i)
-        contents_list = sorted(contents_list, key=lambda x: int(re.search(r'\d+', x).group()))
+        if self.code == 'aims' or self.code == 'dftb+':
+            contents_list = sorted(contents_list, key=lambda x: int(re.search(r'\d+', x).group()))
+        elif self.code == 'so3lr':
+            contents_list = sorted(contents_list, key=lambda x: int(re.findall(r'\d+', x)[1]))
         self.chunk = [contents_list[x:x+2] for x in range(0, len(contents_list), 2)]
 
     def _drct_at_final_dest(self, index: int, namefile: str):
@@ -215,7 +233,10 @@ class FDSubdirectoriesGeneration():
         self._create_dir(namefile, index)
         created_dir = f'Coord-{index}-{self.no_of_element}-{self.axis}-{namefile}_{self.sign}'
 
-        source_path = os.path.join(self.path, 'vibrations')
+        if self.code == 'aims' or self.code == 'dftb+':
+            source_path = os.path.join(self.path, 'vibrations')
+        if self.code == 'so3lr':
+            source_path = self.path
         dst_path = os.path.join(source_path, created_dir)
         self._move_file(source_path, dst_path, namefile)
 
@@ -238,6 +259,11 @@ class FDSubdirectoriesGeneration():
             self.name = 'geo.gen'
             self.input_file_name = 'geo.genS-'
 
+        elif self.code == 'so3lr':
+            self.pattern = 'so3lr-*'
+            self.name = 'so3lr.xyz'
+            self.input_file_name = 'so3lr-'
+
     def _displacements(self):
         """
         Identifies files with displacements on the same atom and coordinate, extracting the corresponding characteristics: 
@@ -250,8 +276,12 @@ class FDSubdirectoriesGeneration():
 
 
         for item in self.chunk:
-            path_file1 = os.path.join(self.path, 'vibrations', item[0])
-            path_file2 = os.path.join(self.path, 'vibrations', item[1])
+            if self.code == 'aims' or self.code == 'dftb+':
+                path_file1 = os.path.join(self.path, 'vibrations', item[0])
+                path_file2 = os.path.join(self.path, 'vibrations', item[1])
+            elif self.code == 'so3lr':
+                path_file1 = os.path.join(self.path, item[0])
+                path_file2 = os.path.join(self.path, item[1])
             self.file1 = open(path_file1, 'r')
             self.file2 = open(path_file2, 'r')
 
@@ -264,7 +294,10 @@ class FDSubdirectoriesGeneration():
             no1 = int(no1)
             no2 = int(no2)
 
-            dir_path = os.path.join(self.path, 'vibrations')
+            if self.code == 'aims' or self.code == 'dftb+': 
+                dir_path = os.path.join(self.path, 'vibrations')
+            elif self.code == 'so3lr':
+                dir_path = self.path
             files = Path(dir_path).glob(self.pattern)
             for file in files:
                 f = str(file)
@@ -283,8 +316,11 @@ class FDSubdirectoriesGeneration():
         """
         Copy input files in the generated directories.
         """
-
-        dir_path = os.path.join(self.path, 'vibrations')
+        
+        if self.code == 'aims' or self.code == 'dftb+':
+            dir_path = os.path.join(self.path, 'vibrations')
+        elif self.code == 'so3lr':
+            dir_path = self.path
         contents = os.listdir(dir_path)
         for item in contents:
             path_item = os.path.join(dir_path, item)
@@ -316,6 +352,8 @@ class FDSubdirectoriesGeneration():
                 print(f'THE dftb_in.hsd (input of DFTB+) FOR SINGLE POINT CALCULATION HAS BEEN GENERATED\n')
             except Exception as e:
                 print(f'THE dftb_in.hsd FILE (input of DFTB+) FOR SINGLE POINT CALCULATION HAS NOT BEEN GENERATED / AN ERROR WAS OCCURED: {e}')
+        elif self.code == 'so3lr':
+            pass
 
     def _pol_drct_DFTB(self):
         """
@@ -372,9 +410,14 @@ class FDSubdirectoriesGeneration():
         Note: Exception handling is implemented to catch any errors during the iteration.
         """
 
-        self.generator = inputfiles.InputsGenerator(self.code, self.kpoints, self.functional, self.eev, self.rho, self.etot, self.forces, 
-            self.sc_iter_limit, self.species, True, None, None, None, self.pol_grid, None, None, 
-            self.SCC_tolerance, self.max_SCC_iterations, self.output_file, self.dispersion, self.dispersion_type, self.restart)
+        if self.code == 'so3lr':
+            check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
+            non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
+
+        if self.code == 'aims' or self.code == 'dftb+': 
+            self.generator = inputfiles.InputsGenerator(self.code, self.kpoints, self.functional, self.eev, self.rho, self.etot, self.forces, 
+                self.sc_iter_limit, self.species, True, None, None, None, self.pol_grid, None, None, 
+                self.SCC_tolerance, self.max_SCC_iterations, self.output_file, self.dispersion, self.dispersion_type, self.restart)
 
         if self.code == 'aims':
             try:
@@ -402,3 +445,7 @@ class FDSubdirectoriesGeneration():
                 print('*' * 150)
             except Exception as e:
                 print(f'THE DIRECTORIES THAT CONTAIN THE DISPLACED STRUCTURES HAVE NOT BEEN GENERATED / AN ERROR WAS OCCURED: {e}')
+        elif self.code == 'so3lr' and non_periodic:
+            self._displacements()
+        elif self.code == 'so3lr' and not non_periodic:
+            pass
