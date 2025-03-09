@@ -112,7 +112,7 @@ def main(
         phonopy_calculator.plot_band_structure()
 
     if restart:
-        rst_calc = rst.RestartCalculation(code, output_file, dispersion, restart, functional, commands, dimensions)
+        rst_calc = rst.RestartCalculation(code, output_file, dispersion, restart, functional, commands, cell_dims)
         rst_calc.restart_calculations()
 
     if spectra_calculation:
