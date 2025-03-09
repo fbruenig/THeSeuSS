@@ -8,29 +8,50 @@ import subprocess
 import shutil
 import concurrent.futures
 import numpy as np
+import glob
 from THeSeuSS import InputsPreparation as inputs
 from THeSeuSS import FiniteDisplacements_phonopy as finitedisps
 from THeSeuSS import EigenvectorsFrequenciesPHONOPY as eigenfreq
 from THeSeuSS import Restart as restart
+from THeSeuSS import GeometryInputConversion as inputconvert
+from THeSeuSS import CheckPeriodicvsNonPeriodic as pervsnonper
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 from phonopy import Phonopy
+from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.interface.calculator import read_crystal_structure, write_crystal_structure, write_supercells_with_displacements, get_default_displacement_distance
 from phonopy.file_IO import write_FORCE_SETS, write_FORCE_CONSTANTS
 from phonopy.phonon.band_structure import get_band_qpoints_and_path_connections
-
+from ase import Atoms
+from ase.io import read, write
+from so3lr import So3lrCalculator
+from ase.optimize import FIRE
 
 
 class PhonopyCalculator:
-    
-    def __init__(self, code: str, cell_dims: str, output_file_of_SCFSs: str):
-        
+   
+    def __init__(
+        self, 
+        code: str, 
+        cell_dims: str, 
+        output_file_of_SCFSs: str,
+        dispersion: bool,
+        restart: bool,
+        commands: str,
+        functional: str
+    ):
+
         self.code = code
         self.cell_dims = cell_dims
         self.output_file_of_SCFSs = output_file_of_SCFSs
+        self.dispersion = dispersion
+        self.restart = restart
+        self.commands = commands
+        self.functional = functional
         self.path = os.getcwd()
         self.conts = []
         self.forces = None
+        self.all_forces = None
         self.dataset = None
         self.dynamical_matrix = None
         self.eigvecs = None
@@ -50,6 +71,24 @@ class PhonopyCalculator:
             return read_crystal_structure('vibrations/geometry.in', interface_mode='aims')
         elif self.code == 'dftb+':
             return read_crystal_structure('vibrations/geo.gen', interface_mode='dftbp')
+        elif self.code == 'so3lr':
+
+            check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file_of_SCFSs, self.dispersion, self.restart, self.commands, self.functional)
+            non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
+            
+            atoms = read('so3lr.xyz')
+            symbols = atoms.get_chemical_symbols()
+            cell = atoms.get_cell()
+            positions = atoms.get_positions()
+            if non_periodic:
+                unitcell = PhonopyAtoms(symbols = symbols,
+                                positions = positions)
+            else:
+                unitcell = PhonopyAtoms(symbols = symbols,
+                                        cell = cell,
+                                        positions = positions)
+
+            return unitcell
 
     def _setup_phonopy(self):
         """
@@ -59,13 +98,31 @@ class PhonopyCalculator:
         Generates atomic displacements using default distances specific to the code.
         """
 
-        unitcell, optional_structure_info = self._read_crystal_structure()
+        if self.code == 'aims' or self.code == 'dftb+':
+            unitcell, optional_structure_info = self._read_crystal_structure()
+        elif self.code == 'so3lr':
+            unitcell = self._read_crystal_structure()
         cell_dims_int = [int(num) for num in self.cell_dims.split()]
         supercell_matrix = [[cell_dims_int[0], 0, 0], [0, cell_dims_int[1], 0], [0, 0, cell_dims_int[2]]]
         self.phonon = Phonopy(unitcell,supercell_matrix)
-        default_displacement_for_code = get_default_displacement_distance(interface_mode=self.code)
+        if self.code == 'aims' or self.code == 'dftb+':
+            default_displacement_for_code = get_default_displacement_distance(interface_mode=self.code)
+        elif self.code == 'so3lr':
+            default_displacement_for_code = get_default_displacement_distance(interface_mode='aims')
         self.phonon.generate_displacements(distance=default_displacement_for_code)
         self.disps = self.phonon.displacements
+
+    def _convert_aims_extxyz(self):
+
+        files = glob.glob("geometry.in-*")
+        aims_to_extxyz = inputconvert.GeometryConversion(self.code)
+
+        for old_file in files:
+
+            num_part = old_file.split('-')[-1]
+            new_name = f"so3lr-{int(num_part):03d}.xyz"
+            aims_to_extxyz.aims_geom_input_to_extxyz(old_file, new_name)
+            os.remove(old_file)
 
     def supercell_disp_PHONOPY(self):
         """
@@ -74,14 +131,19 @@ class PhonopyCalculator:
         """
 
         self._setup_phonopy()
-        os.chdir('vibrations')
         supercells = self.phonon.supercells_with_displacements
         gen_supercell = self.phonon.supercell
-        if self.code == 'aims':
+        if self.code == 'so3lr':
             write_supercells_with_displacements('aims', gen_supercell, supercells)
+            self._convert_aims_extxyz()
+        if self.code == 'aims':
+            os.chdir('vibrations')
+            write_supercells_with_displacements('aims', gen_supercell, supercells)
+            os.chdir('../')
         elif self.code == 'dftb+':
+            os.chdir('vibrations')
             write_supercells_with_displacements('dftbp', gen_supercell, supercells)
-        os.chdir('../')
+            os.chdir('../')
 
     def submit_phonopy_displacements(self):
         """
@@ -100,15 +162,15 @@ class PhonopyCalculator:
 
     def _setup_geometry_processor(self):
         """
-        Calculates the number of atoms in the supercell based on the code, by initializing GeometryProcessor object.
+        Initializes GeometryProcessor object.
         """
 
         if self.code == 'aims':
-            new_path = os.path.join(self.path, 'vibrations', 'geometry.in.supercell')
-            geom_input = new_path
+            geom_input = os.path.join(self.path, 'vibrations', 'geometry.in.supercell')
         elif self.code == 'dftb+':
-            new_path = os.path.join(self.path, 'vibrations', 'geo.genS')
-            geom_input = new_path
+            geom_input = os.path.join(self.path, 'vibrations', 'geo.genS')
+        elif self.code == 'so3lr':
+            geom_input = os.path.join(self.path, 'so3lr.xyz')
 
         self.geometry_processor = inputs.GeometryProcessor(geom_input, self.code)
 
@@ -164,13 +226,63 @@ class PhonopyCalculator:
 
         return self.forces
 
+    def read_forces_from_files_ML(self, path_filename):
+        """
+        Reads the forces from the outputs of so3lr.
+        """
+
+        self.forces = []
+        inside_forces = False
+        
+        with open(path_filename, 'r') as f:
+            for line in f:
+                line = line.strip()
+                
+                if line.startswith("Forces = ["):
+                    inside_forces = True
+                    line = line.replace("Forces = [", "").strip()
+                    
+                if inside_forces:
+                    line = line.replace("[", "").replace("]", "")
+                    
+                    if line:
+                        try:
+                            self.forces.append(list(map(float, line.split())))
+                        except ValueError:
+                            pass
+                        
+                    if "]" in line:
+                        inside_forces = False
+
+        return self.forces
+
+    def all_forces_from_files_ML(self):
+        """
+        Reads the forces from all the outputs of so3lr.
+        """
+
+        files = glob.glob("energies_forces-*")
+        files = sorted(files, key=lambda x: int(x.split('-')[-1].split('.')[0]))
+        self.all_forces = []
+        
+        for forces_file in files:
+            path_filename = os.path.join(self.path, forces_file)
+            if os.path.exists(path_filename):
+                forces = self.read_forces_from_files_ML(path_filename)
+                self.all_forces.append(forces)
+
+        return self.all_forces
+
     def sort_directories(self)-> list:
         """
         Sorts directories in the current directory that contain the substring 'Coord', 
         based on the numeric value in their names.
         """
 
-        new_path = os.path.join(self.path, 'vibrations')
+        if self.code == 'aims' or self.code == 'dftb+': 
+            new_path = os.path.join(self.path, 'vibrations')
+        elif self.code == 'so3lr':
+            new_path = self.path
         contents = [item for item in os.listdir(new_path) if os.path.isdir(os.path.join(new_path, item))]
         for ii in contents:
             if 'Coord' in ii:
@@ -188,6 +300,8 @@ class PhonopyCalculator:
             self.forces_path = os.path.join(self.path, 'vibrations', drct, self.output_file_of_SCFSs)
         elif self.code == 'dftb+':
             self.forces_path = os.path.join(self.path, 'vibrations', drct, 'results.tag')
+        elif self.code == 'so3lr':
+            self.forces_path = os.path.join(self.path, drct, 'energies_forces.txt')
 
         return self.forces_path
 
@@ -202,18 +316,29 @@ class PhonopyCalculator:
                 'first_atoms': []}
 
         self._setup_phonopy()
-        self.conts = self.sort_directories()
-        for j, jj in zip(self.disps,self.conts):
 
-            self.forces_path = self.force_identifier(jj)
-            self.forces = self.read_forces_from_output(self.forces_path)
-            entry = {
-                    'number': np.array([j[0]]),
-                    'displacement': np.array(j[1:]),
-                    'forces': np.array(self.forces)
-            }
-            self.dataset['first_atoms'].append(entry)
+        if self.code == 'aims' or self.code == 'dftb+':
+            self.conts = self.sort_directories()
+            for j, jj in zip(self.disps,self.conts):
 
+                self.forces_path = self.force_identifier(jj)
+                self.forces = self.read_forces_from_output(self.forces_path)
+                entry = {
+                        'number': np.array([j[0]]),
+                        'displacement': np.array(j[1:]),
+                        'forces': np.array(self.forces)
+                }
+                self.dataset['first_atoms'].append(entry)
+        elif self.code == 'so3lr':
+            self.all_forces = self.all_forces_from_files_ML()
+            
+            for j, jj in zip(self.disps,self.all_forces):
+                entry = {
+                        'number': np.array([j[0]]),
+                        'displacement': np.array(j[1:]),
+                        'forces': np.array(jj)
+                }
+                self.dataset['first_atoms'].append(entry)
         self.phonon.dataset = self.dataset
         self.phonon.produce_force_constants()
 
@@ -257,14 +382,15 @@ class PhonopyCalculator:
 
 class Calculator:
 
-    def __init__(self, code: str, output_file: str, dispersion: bool, restart: bool, functional: str = None, commands: str = None):
-
+    def __init__(self, code: str, output_file: str, dispersion: bool, restart: bool, functional: str = None, commands: str = None, cell_dims: str = None):
+        
         self.code = code
         self.commands = commands
         self.output_file = output_file
         self.functional = functional
         self.dispersion = dispersion
         self.restart = restart
+        self.cell_dims = cell_dims
 
     def submit_job(self):
         """
@@ -293,6 +419,114 @@ class Calculator:
             command_tmp = self.commands
         
         subprocess.run(command_tmp, shell=True, executable='/bin/bash')
+
+    def read_input_for_ML(self):
+        """
+        Reads the structural characteristics and set the calculator.
+        """
+        
+        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
+        non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
+
+        atoms = read('so3lr.xyz')
+        positions = atoms.get_positions()
+        symbols = atoms.get_chemical_symbols()
+        if not non_periodic:
+            cell = atoms.get_cell()
+            pbc = atoms.set_pbc((True, True, True))
+            atoms = Atoms(symbols=symbols, positions=positions, cell=cell, pbc=pbc)
+        else:
+            pbc = atoms.set_pbc((False, False, False))
+            atoms = Atoms(symbols=symbols, positions=positions, pbc=pbc)
+       
+        if not non_periodic:
+            calc = So3lrCalculator(
+                    lr_cutoff=11.0,
+                    calculate_stress=False,
+                    dtype=np.float32
+                    )
+        else:
+            calc = So3lrCalculator(
+                    lr_cutoff=100,
+                    calculate_stress=False,
+                    dtype=np.float32
+                    )
+        return atoms, calc
+
+    def submit_geometry_opt_so3lr(self):
+        """
+        Submission of geometry optimization with so3lr.
+        """
+        
+        atoms, calc = self.read_input_for_ML()
+        atoms.calc = calc
+        
+        optimizer = FIRE(atoms, logfile="optimization.log")
+        optimizer.run(fmax=0.05)
+
+        write("optimized_so3lr.xyz", atoms, format="extxyz")
+
+        os.rename('so3lr.xyz', 'so3lr_initial_str.xyz')
+        os.rename('optimized_so3lr.xyz', 'so3lr.xyz')
+
+        print("Final Energy:", atoms.get_potential_energy())
+        print("Final Forces:", atoms.get_forces())
+
+    def submit_single_point_for_so3lr(self, num_part):
+        """
+        Submission of single point calculation with so3lr.
+        """
+
+        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
+        non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
+
+        atoms, calc = self.read_input_for_ML()
+        atoms.calc = calc
+
+        energy = atoms.get_potential_energy()
+        forces = atoms.get_forces()
+
+        if non_periodic:
+            filename = f"energies_forces.txt"
+        else:
+            filename = f"energies_forces-{int(num_part):03d}.txt" 
+
+        with open(filename, "w") as f:
+            f.write(f"Energy = {energy:.8f}\n")
+            f.write("Forces = [")
+            for i, row in enumerate(forces):
+                if i == len(forces) - 1:
+                    f.write(" [" + "  ".join(f"{x:14.8f}" for x in row) + " ]]")  # Last row, no extra \n
+                else:
+                    f.write(" [" + "  ".join(f"{x:14.8f}" for x in row) + " ]\n")
+
+    def energy_forces_so3lr(self):
+        """
+        Submits multiple single point calculations with so3lr.
+        """
+
+        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
+        non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
+
+        if non_periodic:
+            path = os.getcwd()
+            contents = [item for item in os.listdir(path) if os.path.isdir(os.path.join(path, item))]
+            conts = []
+            for ii in contents:
+                if 'Coord' in ii:
+                    conts.append(ii)
+            conts.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
+            for i in conts:
+                os.chdir(i)
+                num_part = None
+                self.submit_single_point_for_so3lr(num_part)
+                os.chdir('../')
+        else:
+            files = glob.glob("so3lr-*")
+            for old_file in files:
+                num_part = old_file.split('-')[-1]
+                num_part = num_part.split('.')[0]
+                self.submit_single_point_for_so3lr(num_part)
 
     def frozen_phonon_approximation_drct(self):
         """
@@ -346,7 +580,7 @@ class Calculator:
         command_statement = []
 
         if self.restart:
-            rst = restart.RestartCalculation(self.code, self.output_file, self.dispersion, self.restart, self.functional, self.commands)
+            rst = restart.RestartCalculation(self.code, self.output_file, self.dispersion, self.restart, self.functional, self.commands, self.cell_dims)
             not_completed_calcs = rst.directory_non_completed_calculations()
             no_of_folders = len(not_completed_calcs)
 
