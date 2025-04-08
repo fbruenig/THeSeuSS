@@ -25,7 +25,8 @@ from phonopy.phonon.band_structure import get_band_qpoints_and_path_connections
 from ase import Atoms
 from ase.io import read, write
 from so3lr import So3lrCalculator
-from ase.optimize import FIRE
+from ase.optimize import FIRE, BFGS
+from ase.filters import FrechetCellFilter
 
 
 class PhonopyCalculator:
@@ -441,28 +442,60 @@ class Calculator:
        
         if not non_periodic:
             calc = So3lrCalculator(
-                    lr_cutoff=11.0,
-                    calculate_stress=False,
-                    dtype=np.float32
+                    lr_cutoff=12.0,
+                    calculate_stress=True,
+                    dtype=np.float64
                     )
         else:
             calc = So3lrCalculator(
                     lr_cutoff=100,
                     calculate_stress=False,
-                    dtype=np.float32
+                    dtype=np.float64
                     )
+        return atoms, calc
+
+    def signle_point_periodic_read_input_for_ML(self, num_part):
+        """
+        Reads the structural characteristics and set the calculator.
+        """
+        
+        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
+        non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
+
+        filename = f"so3lr-{int(num_part):03d}.xyz"
+        atoms = read(filename)
+        positions = atoms.get_positions()
+        symbols = atoms.get_chemical_symbols()
+        cell = atoms.get_cell()
+        pbc = atoms.set_pbc((True, True, True))
+        atoms = Atoms(symbols=symbols, positions=positions, cell=cell, pbc=pbc)
+       
+        calc = So3lrCalculator(
+                lr_cutoff=12.0,
+                calculate_stress=False,
+                dtype=np.float64
+                )
+        
         return atoms, calc
 
     def submit_geometry_opt_so3lr(self):
         """
         Submission of geometry optimization with so3lr.
         """
-        
+
+        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
+        non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
+
         atoms, calc = self.read_input_for_ML()
         atoms.calc = calc
-        
-        optimizer = FIRE(atoms, logfile="optimization.log")
-        optimizer.run(fmax=0.05)
+
+        if not non_periodic:
+            ecf = FrechetCellFilter(atoms, hydrostatic_strain=False, constant_volume=False)
+            optimizer = FIRE(ecf, logfile="optimization.log")
+        else:
+            optimizer = FIRE(atoms, logfile="optimization.log")
+
+        optimizer.run(fmax=0.0005)
 
         write("optimized_so3lr.xyz", atoms, format="extxyz")
 
@@ -480,7 +513,10 @@ class Calculator:
         check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
         non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
 
-        atoms, calc = self.read_input_for_ML()
+        if non_periodic:
+            atoms, calc = self.read_input_for_ML()
+        else:
+            atoms, calc = self.signle_point_periodic_read_input_for_ML(num_part)
         atoms.calc = calc
 
         energy = atoms.get_potential_energy()
