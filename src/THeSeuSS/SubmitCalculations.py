@@ -393,6 +393,28 @@ class Calculator:
         self.restart = restart
         self.cell_dims = cell_dims
 
+        if code == 'aims' or code == 'dftb+':
+            continue
+        elif code == 'so3lr':
+            geo = read('so3lr.xyz')
+            self.non_periodic = not geo.get_pbc().any()
+
+            if not self.non_periodic:
+                calc = So3lrCalculator(
+                        lr_cutoff=12.0,
+                        calculate_stress=True,
+                        dtype=np.float64
+                        )
+            else:
+                calc = So3lrCalculator(
+                        lr_cutoff=100,
+                        calculate_stress=False,
+                        dtype=np.float64
+                        )
+            self.calc = calc
+        else:
+            raise ValueError(f"Unsupported code: {self.code}. Supported codes are 'so3lr', 'aims', and 'dftb+'.")
+
     def submit_job(self):
         """
         Submission of electronic structure calculations, (FHIaims and DFTB+).
@@ -425,42 +447,18 @@ class Calculator:
         """
         Reads the structural characteristics and set the calculator.
         """
-        
-        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
-        non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
-
         atoms = read('so3lr.xyz')
         positions = atoms.get_positions()
         symbols = atoms.get_chemical_symbols()
-        if not non_periodic:
-            cell = atoms.get_cell()
-            pbc = atoms.set_pbc((True, True, True))
-            atoms = Atoms(symbols=symbols, positions=positions, cell=cell, pbc=pbc)
+        if self.code == 'so3lr':
+            return atoms, self.calc
         else:
-            pbc = atoms.set_pbc((False, False, False))
-            atoms = Atoms(symbols=symbols, positions=positions, pbc=pbc)
-       
-        if not non_periodic:
-            calc = So3lrCalculator(
-                    lr_cutoff=12.0,
-                    calculate_stress=True,
-                    dtype=np.float64
-                    )
-        else:
-            calc = So3lrCalculator(
-                    lr_cutoff=100,
-                    calculate_stress=False,
-                    dtype=np.float64
-                    )
-        return atoms, calc
+            raise ValueError(f"Unsupported code: {self.code}. Supported codes are 'so3lr', 'aims', and 'dftb+'.")
 
     def signle_point_periodic_read_input_for_ML(self, num_part):
         """
         Reads the structural characteristics and set the calculator.
         """
-        
-        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
-        non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
 
         filename = f"so3lr-{int(num_part):03d}.xyz"
         atoms = read(filename)
@@ -469,27 +467,21 @@ class Calculator:
         cell = atoms.get_cell()
         pbc = atoms.set_pbc((True, True, True))
         atoms = Atoms(symbols=symbols, positions=positions, cell=cell, pbc=pbc)
-       
-        calc = So3lrCalculator(
-                lr_cutoff=12.0,
-                calculate_stress=False,
-                dtype=np.float64
-                )
-        
-        return atoms, calc
 
+        if self.code == 'so3lr':
+            return atoms, self.calc
+        else:
+            raise ValueError(f"Unsupported code: {self.code}. Supported codes are 'so3lr', 'aims', and 'dftb+'.")
+        
     def submit_geometry_opt_so3lr(self):
         """
         Submission of geometry optimization with so3lr.
         """
 
-        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
-        non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
-
         atoms, calc = self.read_input_for_ML()
         atoms.calc = calc
 
-        if not non_periodic:
+        if not self.non_periodic:
             ecf = FrechetCellFilter(atoms, hydrostatic_strain=False, constant_volume=False)
             optimizer = FIRE(ecf, logfile="optimization.log")
         else:
@@ -510,10 +502,7 @@ class Calculator:
         Submission of single point calculation with so3lr.
         """
 
-        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
-        non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
-
-        if non_periodic:
+        if self.non_periodic:
             atoms, calc = self.read_input_for_ML()
         else:
             atoms, calc = self.signle_point_periodic_read_input_for_ML(num_part)
@@ -522,7 +511,7 @@ class Calculator:
         energy = atoms.get_potential_energy()
         forces = atoms.get_forces()
 
-        if non_periodic:
+        if self.non_periodic:
             filename = f"energies_forces.txt"
         else:
             filename = f"energies_forces-{int(num_part):03d}.txt" 
@@ -541,10 +530,7 @@ class Calculator:
         Submits multiple single point calculations with so3lr.
         """
 
-        check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
-        non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
-
-        if non_periodic:
+        if self.non_periodic:
             path = os.getcwd()
             contents = [item for item in os.listdir(path) if os.path.isdir(os.path.join(path, item))]
             conts = []
