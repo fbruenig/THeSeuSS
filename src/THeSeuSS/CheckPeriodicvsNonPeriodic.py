@@ -63,7 +63,7 @@ class PeriodicvsNonPeriodic():
             self.geom_input = 'geometry.in'
         elif self.code == 'dftb+':
             self.geom_input = 'geo.gen'
-        elif self.code == 'so3lr':
+        elif 'so3lr' in self.code:
             self.geom_input = 'so3lr.xyz'
 
     def check_periodic_vs_non_periodic(self)-> bool:
@@ -85,7 +85,7 @@ class PeriodicvsNonPeriodic():
                         if len(columns) == 3:
                             self.non_periodic = False
                             break
-                    elif self.code == 'so3lr' and 'Lattice' in line:
+                    elif 'so3lr' in self.code and 'Lattice' in line:
                         self.non_periodic = False
                         break
         return self.non_periodic
@@ -151,12 +151,18 @@ class PeriodicvsNonPeriodic():
         """
         Returns eigenvalues, eigenvectors and in turn frequencies.
         """
-
-        if self.non_periodic:
-            hessian = self.vibrational_freq._mass_weighted_hessian()
+        if self.code == 'so3lr-ana':
+            hessian = np.loadtxt("energies_mw-hessian.txt", skiprows=2)
+            hessian = (hessian+hessian.T)/2  # symmetrize the Hessian matrix
         else:
-            hessian = self.phonopy_calculator.disp_forces_dataset_dyn_matrix()
-            hessian = np.real(hessian)   
+            if self.non_periodic:
+                hessian = self.vibrational_freq._mass_weighted_hessian()
+
+            else:
+                hessian = self.phonopy_calculator.disp_forces_dataset_dyn_matrix()
+                hessian = np.real(hessian)
+
+            np.savetxt("energies_mw-hessian.txt", hessian, header=f"Energy = ??\nMass-weighted hessian =", fmt='%.8f')
         
         self.eigvecs, self.eigvals, self.frequencies_in_cm_minus_1 = self.vibrational_freq.read_eig_vec_phonopy(hessian)
         

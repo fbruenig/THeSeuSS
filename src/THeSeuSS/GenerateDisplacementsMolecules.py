@@ -36,7 +36,7 @@ class GenerateDisplacements():
             geom_input = GenerateDisplacements.GEOMETRY_IN
         elif self.code == 'dftb+':
             geom_input = GenerateDisplacements.GEO_GEN
-        elif self.code == 'so3lr':
+        elif 'so3lr' in self.code:
             geom_input = GenerateDisplacements.SO3LR
 
         self.geometry_processor = inputs.GeometryProcessor(geom_input, self.code)

@@ -98,15 +98,18 @@ def main(
         check_periodic_non_periodic.decision_submission_cell()
 
     if files_preparation:
-        files_prep = disp.FDSubdirectoriesGeneration(code, kpoints, functional, eev, rho, etot, forces, 
-                sc_iter_limit, species, pol_grid, SCC_tolerance, max_SCC_iterations, output_file, dispersion, dispersion_type, restart)
-        files_prep.iterate_over_files()
+        if code != 'so3lr-ana':
+            files_prep = disp.FDSubdirectoriesGeneration(code, kpoints, functional, eev, rho, etot, forces,
+                    sc_iter_limit, species, pol_grid, SCC_tolerance, max_SCC_iterations, output_file, dispersion, dispersion_type, restart)
+            files_prep.iterate_over_files()
 
         if code == 'aims' or code == 'dftb+':
             FHIaims_calculator = submit.Calculator(code, output_file, dispersion, restart, functional, commands, cell_dims)
             FHIaims_calculator.submit_jobs_in_parallel()
         elif code == 'so3lr':
             calculator.energy_forces_so3lr()
+        elif code == 'so3lr-ana':
+            calculator.energy_hessian_so3lr()
 
     if plot_bands:
         phonopy_calculator.plot_band_structure()

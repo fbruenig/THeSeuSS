@@ -27,6 +27,8 @@ from ase.io import read, write
 from so3lr import So3lrCalculator
 from ase.optimize import FIRE, BFGS
 from ase.filters import FrechetCellFilter
+from mendeleev import element
+
 
 
 class PhonopyCalculator:
@@ -72,7 +74,7 @@ class PhonopyCalculator:
             return read_crystal_structure('vibrations/geometry.in', interface_mode='aims')
         elif self.code == 'dftb+':
             return read_crystal_structure('vibrations/geo.gen', interface_mode='dftbp')
-        elif self.code == 'so3lr':
+        elif 'so3lr' in self.code:
 
             check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(self.code, self.cell_dims, self.output_file_of_SCFSs, self.dispersion, self.restart, self.commands, self.functional)
             non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
@@ -101,14 +103,14 @@ class PhonopyCalculator:
 
         if self.code == 'aims' or self.code == 'dftb+':
             unitcell, optional_structure_info = self._read_crystal_structure()
-        elif self.code == 'so3lr':
+        elif 'so3lr' in self.code:
             unitcell = self._read_crystal_structure()
         cell_dims_int = [int(num) for num in self.cell_dims.split()]
         supercell_matrix = [[cell_dims_int[0], 0, 0], [0, cell_dims_int[1], 0], [0, 0, cell_dims_int[2]]]
         self.phonon = Phonopy(unitcell,supercell_matrix)
         if self.code == 'aims' or self.code == 'dftb+':
             default_displacement_for_code = get_default_displacement_distance(interface_mode=self.code)
-        elif self.code == 'so3lr':
+        elif 'so3lr' in self.code:
             default_displacement_for_code = get_default_displacement_distance(interface_mode='aims')
         self.phonon.generate_displacements(distance=default_displacement_for_code)
         self.disps = self.phonon.displacements
@@ -134,7 +136,7 @@ class PhonopyCalculator:
         self._setup_phonopy()
         supercells = self.phonon.supercells_with_displacements
         gen_supercell = self.phonon.supercell
-        if self.code == 'so3lr':
+        if 'so3lr' in self.code:
             write_supercells_with_displacements('aims', gen_supercell, supercells)
             self._convert_aims_extxyz()
         if self.code == 'aims':
@@ -170,7 +172,7 @@ class PhonopyCalculator:
             geom_input = os.path.join(self.path, 'vibrations', 'geometry.in.supercell')
         elif self.code == 'dftb+':
             geom_input = os.path.join(self.path, 'vibrations', 'geo.genS')
-        elif self.code == 'so3lr':
+        elif 'so3lr' in self.code:
             geom_input = os.path.join(self.path, 'so3lr.xyz')
 
         self.geometry_processor = inputs.GeometryProcessor(geom_input, self.code)
@@ -282,7 +284,7 @@ class PhonopyCalculator:
 
         if self.code == 'aims' or self.code == 'dftb+': 
             new_path = os.path.join(self.path, 'vibrations')
-        elif self.code == 'so3lr':
+        elif 'so3lr' in self.code:
             new_path = self.path
         contents = [item for item in os.listdir(new_path) if os.path.isdir(os.path.join(new_path, item))]
         for ii in contents:
@@ -301,7 +303,7 @@ class PhonopyCalculator:
             self.forces_path = os.path.join(self.path, 'vibrations', drct, self.output_file_of_SCFSs)
         elif self.code == 'dftb+':
             self.forces_path = os.path.join(self.path, 'vibrations', drct, 'results.tag')
-        elif self.code == 'so3lr':
+        elif 'so3lr' in self.code:
             self.forces_path = os.path.join(self.path, drct, 'energies_forces.txt')
 
         return self.forces_path
@@ -330,7 +332,7 @@ class PhonopyCalculator:
                         'forces': np.array(self.forces)
                 }
                 self.dataset['first_atoms'].append(entry)
-        elif self.code == 'so3lr':
+        elif 'so3lr' in self.code:
             self.all_forces = self.all_forces_from_files_ML()
             
             for j, jj in zip(self.disps,self.all_forces):
@@ -394,21 +396,27 @@ class Calculator:
         self.cell_dims = cell_dims
 
         if code == 'aims' or code == 'dftb+':
-            continue
-        elif code == 'so3lr':
+            pass
+        elif 'so3lr' in code:
             geo = read('so3lr.xyz')
             self.non_periodic = not geo.get_pbc().any()
 
+            calculate_hessian = True if code == 'so3lr-ana' else False
+
+            # Stresses are not yet implemented when calculating the hessian with so3lr
+            # (but it is straightforward to implement)
             if not self.non_periodic:
                 calc = So3lrCalculator(
                         lr_cutoff=12.0,
-                        calculate_stress=True,
+                        calculate_stress=True if code == 'so3lr' else False,
+                        calculate_hessian=calculate_hessian,
                         dtype=np.float64
                         )
             else:
                 calc = So3lrCalculator(
                         lr_cutoff=100,
                         calculate_stress=False,
+                        calculate_hessian=calculate_hessian,
                         dtype=np.float64
                         )
             self.calc = calc
@@ -450,7 +458,7 @@ class Calculator:
         atoms = read('so3lr.xyz')
         positions = atoms.get_positions()
         symbols = atoms.get_chemical_symbols()
-        if self.code == 'so3lr':
+        if 'so3lr' in self.code:
             return atoms, self.calc
         else:
             raise ValueError(f"Unsupported code: {self.code}. Supported codes are 'so3lr', 'aims', and 'dftb+'.")
@@ -468,7 +476,7 @@ class Calculator:
         pbc = atoms.set_pbc((True, True, True))
         atoms = Atoms(symbols=symbols, positions=positions, cell=cell, pbc=pbc)
 
-        if self.code == 'so3lr':
+        if 'so3lr' in self.code:
             return atoms, self.calc
         else:
             raise ValueError(f"Unsupported code: {self.code}. Supported codes are 'so3lr', 'aims', and 'dftb+'.")
@@ -524,6 +532,34 @@ class Calculator:
                     f.write(" [" + "  ".join(f"{x:14.8f}" for x in row) + " ]]")  # Last row, no extra \n
                 else:
                     f.write(" [" + "  ".join(f"{x:14.8f}" for x in row) + " ]\n")
+
+    def get_mass_matrix(self, atoms):
+        """
+        Computes the mass matrix product based on the atomic weights of atoms involved in the force calculation.
+        Calculates the reciprocal square root of the mass product for each pair of atoms.
+        """
+
+        masses = atoms.get_masses()  # Get the masses of the atoms
+        masses = np.repeat(masses, 3)  # Repeat masses for each Cartesian coordinate (x, y, z)
+
+        return np.sqrt(masses[:,None] * masses[None,:])  # Outer product to create a mass matrix
+
+    def energy_hessian_so3lr(self):
+        """
+        Submission of single point calculation with so3lr.
+        """
+
+        atoms, calc = self.read_input_for_ML()
+        atoms.calc = calc
+
+        energy = atoms.get_potential_energy()
+        hessian = calc.get_property('hessian', atoms)
+
+        no_of_atoms = len(atoms)
+        mass_matrix = self.get_mass_matrix(atoms)
+        hessian = hessian.reshape((no_of_atoms*3, no_of_atoms*3))/ mass_matrix
+        filename = f"energies_mw-hessian.txt"
+        np.savetxt(filename, hessian, header=f"Energy = {energy:.8f}\nMass-weighted hessian =", fmt='%.8f')
 
     def energy_forces_so3lr(self):
         """
@@ -669,6 +705,6 @@ class Calculator:
                     else:
                         command_tmp = f'cd vibrations; cd {i}; cd polarizability; {self.commands}'
                     command_statement.append(command_tmp)
-
-        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        num_run = multiprocessing.cpu_count()//num_threads
+        with ThreadPoolExecutor(max_workers=num_run) as executor:
             executor.map(self.run_command, command_statement)

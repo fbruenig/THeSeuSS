@@ -58,7 +58,7 @@ class VibrationalFrequencies():
             geom_input = VibrationalFrequencies.GEOMETRY_IN
         elif self.code == 'dftb+':
             geom_input = VibrationalFrequencies.GEO_GEN
-        elif self.code == 'so3lr':
+        elif 'so3lr' in self.code:
             geom_input = VibrationalFrequencies.SO3LR
 
         self.geometry_processor = inputs.GeometryProcessor(geom_input, self.code)
@@ -284,7 +284,7 @@ class VibrationalFrequencies():
             conversion_factor_to_THz = 154.10794
             conversion_factor_to_cm_minus_1 = 154.10794*33.356
 
-        if self.code == 'so3lr':
+        if 'so3lr' in self.code:
             conversion_factor_to_THz = 15.633302
             conversion_factor_to_cm_minus_1 = 15.633302*33.356
 
