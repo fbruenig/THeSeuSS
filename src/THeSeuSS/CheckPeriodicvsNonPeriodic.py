@@ -192,6 +192,8 @@ class PeriodicvsNonPeriodic():
             mask = self.frequencies_in_cm_minus_1 >= 30
             self.frequencies_in_cm_minus_1 = self.frequencies_in_cm_minus_1[mask]
             np.savetxt("Frequency.txt", self.frequencies_in_cm_minus_1)
+            np.savetxt("Eigenvectors.txt", self.eigvecs, header="Eigenvectors", fmt='%.8f')
+            np.savetxt("Eigenvalues.txt", self.eigvals, header="Eigenvalues", fmt='%.8f')
 
             return self.eigvecs, self.eigvals, self.frequencies_in_cm_minus_1, num_excluded_freqs
 

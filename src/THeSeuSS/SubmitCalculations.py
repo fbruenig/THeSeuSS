@@ -705,6 +705,9 @@ class Calculator:
                     else:
                         command_tmp = f'cd vibrations; cd {i}; cd polarizability; {self.commands}'
                     command_statement.append(command_tmp)
-        num_run = multiprocessing.cpu_count()//num_threads
+        if number_of_cores is not None:
+            num_run = number_of_cores//num_threads
+        else:
+            num_run = multiprocessing.cpu_count()//num_threads
         with ThreadPoolExecutor(max_workers=num_run) as executor:
             executor.map(self.run_command, command_statement)
