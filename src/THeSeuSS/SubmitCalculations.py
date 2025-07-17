@@ -27,8 +27,6 @@ from ase.io import read, write
 from so3lr import So3lrCalculator
 from ase.optimize import FIRE, BFGS
 from ase.filters import FrechetCellFilter
-from mendeleev import element
-
 
 
 class PhonopyCalculator:
@@ -480,7 +478,7 @@ class Calculator:
             return atoms, self.calc
         else:
             raise ValueError(f"Unsupported code: {self.code}. Supported codes are 'so3lr', 'aims', and 'dftb+'.")
-        
+
     def submit_geometry_opt_so3lr(self):
         """
         Submission of geometry optimization with so3lr.
