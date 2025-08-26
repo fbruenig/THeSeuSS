@@ -383,7 +383,8 @@ class PhonopyCalculator:
 
 class Calculator:
 
-    def __init__(self, code: str, output_file: str, dispersion: bool, restart: bool, functional: str = None, commands: str = None, cell_dims: str = None):
+    def __init__(self, code: str, output_file: str, dispersion: bool, restart: bool, functional: str = None, commands: str = None, cell_dims: str = None,
+                 subsystem_size: int = None, subsystem_reference_id: int = None, optimize_only_subsystem: bool = False):
         
         self.code = code
         self.commands = commands
@@ -392,6 +393,11 @@ class Calculator:
         self.dispersion = dispersion
         self.restart = restart
         self.cell_dims = cell_dims
+        self.subsystem_size = subsystem_size
+        if self.subsystem_size is not None:
+            self.subsystem_indices = list(range(subsystem_size))
+        self.subsystem_reference_id = subsystem_reference_id
+        self.optimize_only_subsystem = optimize_only_subsystem
 
         if code == 'aims' or code == 'dftb+':
             pass
@@ -487,13 +493,28 @@ class Calculator:
         atoms, calc = self.read_input_for_ML()
         atoms.calc = calc
 
+        # Apply constraints if specific atoms should be optimized
+        if self.optimize_only_subsystem:
+            assert self.subsystem_indices is not None, "subsytem must be provided via subsystem_size when optimize_only_subsystem is True."
+            from ase.constraints import FixAtoms
+            # Create a mask of atoms to fix (all atoms NOT in indices_to_optimize)
+            fix_indices = [i for i in range(len(atoms)) if i not in self.subsystem_indices]
+            if self.subsystem_reference_id is not None:
+                fix_indices.append(self.subsystem_reference_id)
+            constraint = FixAtoms(indices=fix_indices)
+            atoms.set_constraint(constraint)
+
         if not self.non_periodic:
             ecf = FrechetCellFilter(atoms, hydrostatic_strain=False, constant_volume=False)
             optimizer = FIRE(ecf, logfile="optimization.log")
+            optimizer.run(fmax=0.0005)
+        elif self.optimize_only_subsystem:
+            optimizer = BFGS(atoms, logfile="optimization.log")
+            optimizer.run(fmax=0.0005, steps=10000)  # Adjusted force convergence criterion for subsystem optimization
         else:
             optimizer = FIRE(atoms, logfile="optimization.log")
+            optimizer.run(fmax=0.0005)
 
-        optimizer.run(fmax=0.0005)
 
         write("optimized_so3lr.xyz", atoms, format="extxyz")
 
@@ -555,6 +576,12 @@ class Calculator:
 
         no_of_atoms = len(atoms)
         mass_matrix = self.get_mass_matrix(atoms)
+        if self.subsystem_indices is not None:
+            no_of_atoms = len(self.subsystem_indices)
+            # If subsystem indices are provided, only consider those atoms
+            mass_matrix = mass_matrix[:(no_of_atoms*3), :(no_of_atoms*3)]
+            hessian = hessian[:no_of_atoms,:,:no_of_atoms,:]
+
         hessian = hessian.reshape((no_of_atoms*3, no_of_atoms*3))/ mass_matrix
         filename = f"energies_mw-hessian.txt"
         np.savetxt(filename, hessian, header=f"Energy = {energy:.8f}\nMass-weighted hessian =", fmt='%.8f')

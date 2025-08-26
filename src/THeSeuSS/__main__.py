@@ -54,10 +54,16 @@ def main(
         broadening: str,
         fwhm: str,
         dispersion_type: str,
-        restart: bool
+        restart: bool,
+        subsystem_size: str = None,
+        subsystem_reference_id: str = None,
+        optimize_only_subsystem: bool = False,
 ):
 
-    calculator = submit.Calculator(code, output_file, dispersion, restart, functional, commands, cell_dims)
+    calculator = submit.Calculator(code, output_file, dispersion, restart, functional, commands, cell_dims,
+                                   subsystem_size=int(subsystem_size),
+                                   subsystem_reference_id=int(subsystem_reference_id),
+                                   optimize_only_subsystem=optimize_only_subsystem)
     check_calculator = check.CheckOutputSuccess(code, output_file, dispersion, restart, functional)
     phonopy_calculator = submit.PhonopyCalculator(code, cell_dims, output_file, dispersion, restart, commands, functional)
 
@@ -91,7 +97,7 @@ def main(
             generator.file_exists()
             calculator.submit_job()
             check_periodic_non_periodic.periodic_space_group_calc()
-        elif code == 'so3lr':
+        elif 'so3lr' in code:
             calculator.submit_geometry_opt_so3lr()
 
     if submission_cell:
@@ -202,8 +208,11 @@ def run():
     fwhm = keywords.get('fwhm')
     dispersion_type = keywords.get('dispersion_type')
     restart = keywords.get('restart')
+    subsystem_size = keywords.get('subsystem_size', None)
+    subsystem_reference_id = keywords.get('subsystem_reference_id', None)
+    optimize_only_subsystem = keywords.get('optimize_only_subsystem', False)
 
-    main(cell_geometry_optimization, functional, kpoints, eev, rho, etot, forces, sc_iter_limit, species, geometry, energy, steps, pol_grid, supercell, code, output_file, dispersion, spectra_calculation, files_preparation, cell_dims, submission_cell, plot_bands, commands, max_force_component, max_steps, SCC_tolerance, max_SCC_iterations, broadening, fwhm, dispersion_type, restart)
+    main(cell_geometry_optimization, functional, kpoints, eev, rho, etot, forces, sc_iter_limit, species, geometry, energy, steps, pol_grid, supercell, code, output_file, dispersion, spectra_calculation, files_preparation, cell_dims, submission_cell, plot_bands, commands, max_force_component, max_steps, SCC_tolerance, max_SCC_iterations, broadening, fwhm, dispersion_type, restart, subsystem_size, subsystem_reference_id, optimize_only_subsystem)
 
 if __name__== '__main__':
     run()
