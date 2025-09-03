@@ -106,6 +106,8 @@ class TwoPointCentralDiff():
         elif self.code == 'dftb+':
             self.polarizability_pattern = 'Static polarisability:'
             self.cartesian_polarization_pattern = 'Dipole moment:'
+        elif self.code == 'so3lr':
+            self.cartesian_polarization_pattern = 'Dipole ='
 
     def _find_pattern(self, drcts: str)-> [np.ndarray, np.ndarray]:
         """
@@ -174,6 +176,14 @@ class TwoPointCentralDiff():
 
                         self.Polarizability = np.array([xx, yy, zz, xy, xz, yz])
 
+        if self.code == 'so3lr':
+            path = os.path.join(self.path, '', drcts, self.output_file)
+            with open(path, 'r') as f:
+                lines = f.readlines()
+                for line in lines:
+                    if self.cartesian_polarization_pattern in line:
+                        self.CartesianPolarization = np.float64(self._split_line(line.replace('[','').replace(']',''))[-3:])
+
         return self.Polarizability, self.CartesianPolarization
 
     def _map_axis_coord(self, coord: str):
@@ -206,7 +216,7 @@ class TwoPointCentralDiff():
         """
 	
         drct = []
-        new_path = os.path.join(self.path, 'vibrations')
+        new_path = os.path.join(self.path, 'vibrations') if not 'so3lr' in self.code else self.path
         contents = [item for item in os.listdir(new_path) if os.path.isdir(os.path.join(new_path, item))]
         for i in contents:
             if 'Coord' in i:
@@ -248,8 +258,9 @@ class TwoPointCentralDiff():
             coeff2 = self._assign_axis_to_numbers(sign2)
 
             #       Polarizability
-            pol_tmp = polarizability1 * coeff1 * c_diff_fraction + polarizability2 * coeff2 * c_diff_fraction
-            self.pol = np.append(self.pol,[pol_tmp], axis = 0)
+            if not 'so3lr' in self.code:
+                pol_tmp = polarizability1 * coeff1 * c_diff_fraction + polarizability2 * coeff2 * c_diff_fraction
+                self.pol = np.append(self.pol,[pol_tmp], axis = 0)
             #       Cartesian Polarization
             cartesian_pol_tmp = cart_pol1 * coeff1 * c_diff_fraction + cart_pol2 * coeff2 * c_diff_fraction
             self.cartesian_pol = np.append(self.cartesian_pol,[cartesian_pol_tmp], axis = 0)
@@ -312,7 +323,12 @@ class TwoPointCentralDiff():
             self._pol(0.01)
         elif self.code == 'dftb+':
             self._pol(0.005)
+        elif self.code == 'so3lr':
+            self._pol(0.01)
         if self.non_periodic:
+            pass
+        elif self.code == 'so3lr':
+            print("WARNING: Currently periodic calculation with code so3lr does not evaluate equivalent atoms! Skipping this step.")
             pass
         else:
             self.coord_conversion_cartesian_to_fractional()

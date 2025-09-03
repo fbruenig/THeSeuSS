@@ -26,7 +26,8 @@ class VibrationalFrequencies():
         cell_dims: str,
         restart: bool,
         commands: str,
-        functional: str
+        functional: str,
+        subsystem_size: str = None
     ):
 
         self.code = code
@@ -36,6 +37,7 @@ class VibrationalFrequencies():
         self.restart = restart
         self.commands = commands
         self.functional = functional
+        self.subsystem_size = subsystem_size
         self.geometry_processor = None
         self.no_of_atoms = None
         self.phonopy_calculator = None
@@ -45,6 +47,7 @@ class VibrationalFrequencies():
         self.dataset = None
         self.delta_forces = None
         self.mass = None
+
         self._set_geometry_processor()
         self._set_phonopy_calculator()
         self._displacement()
@@ -129,6 +132,8 @@ class VibrationalFrequencies():
         """
 
         self.no_of_atoms = self._get_number_of_atoms()
+        if self.subsystem_size is not None:
+            self.no_of_atoms = int(self.subsystem_size)
         self.dataset = {'natom': self.no_of_atoms,
                 'atoms': []}
         self.conts = self._get_sorted_directories()

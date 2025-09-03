@@ -90,6 +90,10 @@ class IntensityCalculator():
 
         self._set_constants()
 
+        if 'so3lr' in self.code:
+            grad_dip = self.dipole_factor * self.cartesian_pol # D
+            self.IR_intensity = np.sum(np.dot(np.transpose(grad_dip), self.eig_vec)**2, axis=0) * self.ir_factor # D^2/(A^2*amu)
+
         if self.non_periodic:
             if self.code == 'aims':
                 grad_dip = self.dipole_factor * self.cartesian_pol # D
@@ -167,3 +171,73 @@ class IntensityCalculator():
             print(f'RAMAN ACTIVITY HAS NOT BEEN CALCULATED')
 
         return self.IR_intensity, self.raman_activity
+
+
+class SO3LR_analytical_IR_Calculator(IntensityCalculator):
+
+    def __init__(self, code, eig_vec, no_negfreqs: int = 0, subsystem_size: str = None):
+        from so3lr import So3lrCalculator
+        from ase.io import read
+
+        self.code = code
+        self.eig_vec = eig_vec
+        self.no_negfreqs = no_negfreqs
+        self.geo = read('so3lr.xyz')
+        self.non_periodic = not self.geo.get_pbc().any()
+        self.IR_intensity = np.empty(0, dtype=np.float64)
+        self.raman_activity = np.empty(0, dtype=np.float64)
+        self.subsystem_size = subsystem_size
+        self.pol = np.empty([0,6])          #Polarizability is currently not implemented in SO3LR
+        self.cartesian_pol = np.empty([0,3])
+
+        if self.subsystem_size is not None:
+            self.subsystem_indices = list(range(int(subsystem_size)))
+        else:
+            self.subsystem_indices = [i for i in range(len(self.geo))]
+
+        if not self.non_periodic:
+            calc = So3lrCalculator(
+                lr_cutoff=12.,
+                dispersion_energy_cutoff_lr_damping=2.,
+                dtype=np.float64,
+                calculate_obs_grads=True,
+                output_intermediate_quantities=["partial_charges"],
+                output_atom_indices=self.subsystem_indices
+                )
+        else:
+            calc = So3lrCalculator(
+                lr_cutoff=100.,
+                dispersion_energy_cutoff_lr_damping=2.,
+                dtype=np.float64,
+                calculate_obs_grads=True,
+                output_intermediate_quantities=["partial_charges"],
+                output_atom_indices=self.subsystem_indices
+                )
+        self.calc = calc
+
+    def calculate_dipole_gradients(self):
+        """
+        Calculates the dipole gradients for SO3LR.
+        """
+        self._set_constants()
+
+        self.calc.calculate(self.geo)
+        results = self.calc.results['obs_grads']['partial_charges_grad']
+        charges=np.array([results[i][0] for i in self.subsystem_indices])
+        charge_grads = np.array([results[i][1] for i in self.subsystem_indices])
+        print(charge_grads.shape)
+        positions = self.geo.get_positions()[self.subsystem_indices,:]
+        #positions -= np.min(positions,axis=0)
+        #mean_dip = np.sum(charges[:,None]*positions,axis=0)
+        charges -= np.mean(charges)
+        ids=np.tile(np.eye(3), (positions.shape[0],1))
+        self.cartesian_pol = np.repeat(charges, 3)[:,None] * ids + charge_grads.flatten()[:,None] * np.repeat(positions, 3, axis=0) # eAng/Ang
+        return self.pol, self.cartesian_pol
+
+    # def IRintensity(self):
+    #     """
+    #     Calculates the IR intensity.
+    #     """
+    #     self._set_constants()
+
+    #     self.IR_intensity = np.sum(np.dot(np.transpose(self.dipole_grad), self.eig_vec)**2, axis=0) * self.ir_factor # D^2/(A^2*amu)

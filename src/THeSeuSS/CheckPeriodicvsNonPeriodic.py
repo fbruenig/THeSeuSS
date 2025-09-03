@@ -15,7 +15,7 @@ from THeSeuSS import EigenvectorsFrequenciesPHONOPY as eigenvec
 
 class PeriodicvsNonPeriodic():
 
-    def __init__(self, code: str, cell_dims: str, output_file: str, dispersion: bool, restart: bool, commands: str, functional: str = None):
+    def __init__(self, code: str, cell_dims: str, output_file: str, dispersion: bool, restart: bool, commands: str, functional: str = None, subsystem_size: str = None):
 
         self.code = code
         self.cell_dims = cell_dims
@@ -24,6 +24,7 @@ class PeriodicvsNonPeriodic():
         self.restart = restart
         self.commands = commands
         self.functional = functional
+        self.subsystem_size = subsystem_size
         self.non_periodic = True
         self.path = os.getcwd()
         self.geom_input = None
@@ -52,7 +53,7 @@ class PeriodicvsNonPeriodic():
         self.generated_displacements_mol = dispsmolecules.GenerateDisplacements(self.code)
         self.check_calculator = check.CheckOutputSuccess(self.code, self.output_file, self.dispersion, self.functional)
         self.calculator = submit.Calculator(self.code, self.output_file, self.dispersion, self.restart, self.functional, self.commands, self.cell_dims)
-        self.vibrational_freq = eigenvec.VibrationalFrequencies(self.code, self.output_file, self.dispersion, self.cell_dims, self.restart, self.commands, self.functional)
+        self.vibrational_freq = eigenvec.VibrationalFrequencies(self.code, self.output_file, self.dispersion, self.cell_dims, self.restart, self.commands, self.functional, self.subsystem_size)
 
     def _specify_geometry_inputs(self):
         """

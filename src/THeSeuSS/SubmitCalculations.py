@@ -384,7 +384,7 @@ class PhonopyCalculator:
 class Calculator:
 
     def __init__(self, code: str, output_file: str, dispersion: bool, restart: bool, functional: str = None, commands: str = None, cell_dims: str = None,
-                 subsystem_size: int = None, subsystem_reference_id: int = None, optimize_only_subsystem: bool = False):
+                 subsystem_size: str = None, subsystem_reference_id: str = None, optimize_only_subsystem: bool = False):
         
         self.code = code
         self.commands = commands
@@ -395,7 +395,7 @@ class Calculator:
         self.cell_dims = cell_dims
         self.subsystem_size = subsystem_size
         if self.subsystem_size is not None:
-            self.subsystem_indices = list(range(subsystem_size))
+            self.subsystem_indices = list(range(int(subsystem_size)))
         self.subsystem_reference_id = subsystem_reference_id
         self.optimize_only_subsystem = optimize_only_subsystem
 
@@ -406,6 +406,7 @@ class Calculator:
             self.non_periodic = not geo.get_pbc().any()
 
             calculate_hessian = True if code == 'so3lr-ana' else False
+            output_intermediate_quantities = ['partial_charges'] if code == 'so3lr' else None
 
             # Stresses are not yet implemented when calculating the hessian with so3lr
             # (but it is straightforward to implement)
@@ -414,14 +415,18 @@ class Calculator:
                         lr_cutoff=12.0,
                         calculate_stress=True if code == 'so3lr' else False,
                         calculate_hessian=calculate_hessian,
-                        dtype=np.float64
+                        dtype=np.float64,
+                        output_intermediate_quantities=output_intermediate_quantities,
+                        has_aux=True if output_intermediate_quantities is not None else False
                         )
             else:
                 calc = So3lrCalculator(
                         lr_cutoff=100,
                         calculate_stress=False,
                         calculate_hessian=calculate_hessian,
-                        dtype=np.float64
+                        dtype=np.float64,
+                        output_intermediate_quantities=output_intermediate_quantities,
+                        has_aux=True if output_intermediate_quantities is not None else False
                         )
             self.calc = calc
         else:
@@ -500,7 +505,7 @@ class Calculator:
             # Create a mask of atoms to fix (all atoms NOT in indices_to_optimize)
             fix_indices = [i for i in range(len(atoms)) if i not in self.subsystem_indices]
             if self.subsystem_reference_id is not None:
-                fix_indices.append(self.subsystem_reference_id)
+                fix_indices.append(int(self.subsystem_reference_id))
             constraint = FixAtoms(indices=fix_indices)
             atoms.set_constraint(constraint)
 
@@ -534,9 +539,17 @@ class Calculator:
         else:
             atoms, calc = self.signle_point_periodic_read_input_for_ML(num_part)
         atoms.calc = calc
-
-        energy = atoms.get_potential_energy()
-        forces = atoms.get_forces()
+        positions = atoms.get_positions()
+        #energy = atoms.get_potential_energy()
+        #forces = atoms.get_forces()
+        calc.calculate(atoms)
+        #energy, forces, dipole_moment = calc.results['energy'], calc.results['forces'], calc.results['aux']['dipole_vec'][0]
+        energy, forces, charges = calc.results['energy'], calc.results['forces'], calc.results['aux']['partial_charges']
+        if self.subsystem_size is not None:
+            forces = forces[:int(self.subsystem_size), :]
+            positions = positions[:int(self.subsystem_size), :]
+            charges = charges[:int(self.subsystem_size)]
+        dipole_moment = np.sum(charges[:,None]*positions,axis=0)
 
         if self.non_periodic:
             filename = f"energies_forces.txt"
@@ -545,6 +558,7 @@ class Calculator:
 
         with open(filename, "w") as f:
             f.write(f"Energy = {energy:.8f}\n")
+            f.write(f"Dipole = [{dipole_moment[0]:.8f} {dipole_moment[1]:.8f} {dipole_moment[2]:.8f}]\n")
             f.write("Forces = [")
             for i, row in enumerate(forces):
                 if i == len(forces) - 1:
@@ -576,8 +590,8 @@ class Calculator:
 
         no_of_atoms = len(atoms)
         mass_matrix = self.get_mass_matrix(atoms)
-        if self.subsystem_indices is not None:
-            no_of_atoms = len(self.subsystem_indices)
+        if self.subsystem_size is not None:
+            no_of_atoms = int(self.subsystem_size)
             # If subsystem indices are provided, only consider those atoms
             mass_matrix = mass_matrix[:(no_of_atoms*3), :(no_of_atoms*3)]
             hessian = hessian[:no_of_atoms,:,:no_of_atoms,:]

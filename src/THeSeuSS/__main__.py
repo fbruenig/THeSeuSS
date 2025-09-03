@@ -3,6 +3,7 @@
 #AUTHOR: Ariadni Boziki
 
 
+import glob
 import os
 import subprocess
 from THeSeuSS import InputOutputFiles as inputfiles
@@ -61,8 +62,8 @@ def main(
 ):
 
     calculator = submit.Calculator(code, output_file, dispersion, restart, functional, commands, cell_dims,
-                                   subsystem_size=int(subsystem_size),
-                                   subsystem_reference_id=int(subsystem_reference_id),
+                                   subsystem_size=subsystem_size,
+                                   subsystem_reference_id=subsystem_reference_id,
                                    optimize_only_subsystem=optimize_only_subsystem)
     check_calculator = check.CheckOutputSuccess(code, output_file, dispersion, restart, functional)
     phonopy_calculator = submit.PhonopyCalculator(code, cell_dims, output_file, dispersion, restart, commands, functional)
@@ -80,7 +81,7 @@ def main(
     print(f'CODE: {code}')
     print(f'OUTPUT FILE: {output_file}\n')
 
-    check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(code, cell_dims, output_file, dispersion, restart, commands, functional)
+    check_periodic_non_periodic = pervsnonper.PeriodicvsNonPeriodic(code, cell_dims, output_file, dispersion, restart, commands, functional, subsystem_size)
     non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
     check_periodic_non_periodic.print_periodic_vs_non_periodic()
     check_periodic_non_periodic.code_initialization()
@@ -108,6 +109,22 @@ def main(
             files_prep = disp.FDSubdirectoriesGeneration(code, kpoints, functional, eev, rho, etot, forces,
                     sc_iter_limit, species, pol_grid, SCC_tolerance, max_SCC_iterations, output_file, dispersion, dispersion_type, restart)
             files_prep.iterate_over_files()
+            # This is very dirty but works precisely how we want:
+            if subsystem_size is not None:
+                # # Delete subdirectories that start with 'Coord' but are not in the list of subsystem indices
+                all_dirs = [d for d in os.listdir('.') if os.path.isdir(d) and d.startswith('Coord')]
+                for dir_name in all_dirs:
+                    xyz_index = int(dir_name.split('so3lr-')[1].split('.xyz')[0])
+                    if xyz_index > int(subsystem_size)*6 +1:
+                        subprocess.run(['rm', '-rf', dir_name])
+
+                # find all subdirs and files that contain so3lr-*.xyz
+                all_xyz_files = glob.glob('so3lr-*.xyz')
+                for xyz_file in all_xyz_files:
+                    xyz_index = int(xyz_file.split('so3lr-')[1].split('.xyz')[0])
+                    if xyz_index > int(subsystem_size)*6 +1:
+                        subprocess.run(['rm', '-f', xyz_file])
+
 
         if code == 'aims' or code == 'dftb+':
             FHIaims_calculator = submit.Calculator(code, output_file, dispersion, restart, functional, commands, cell_dims)
@@ -141,6 +158,26 @@ def main(
             IRintensity, Ramanactivity = intensities_calculator.spectra_calculation()
 
             plot_vibrational_spectra = plots.SpectraPlotter(freq, IRintensity, Ramanactivity, broadening, fwhm)
+            plot_vibrational_spectra.plot_spectra()
+
+        elif code == 'so3lr':
+            #raise NotImplementedError("Dipole derivatives are already printed to the output files, but the processing is not implemented! Please do it!")
+            central_diff = cendiff.TwoPointCentralDiff(code, 'energies_forces.txt', dispersion, supercell, restart, functional)
+            pol, cartesian_pol = central_diff.pol_cart_pol_processor()
+            #np.savetxt('Cartesian_pol.txt', cartesian_pol)
+
+            intensities_calculator = spectra.IntensityCalculator(code, eigvecs, cartesian_pol, pol, output_file, no_neg_freqs, restart, functional)
+            IRintensity, Ramanactivity = intensities_calculator.spectra_calculation()
+            plot_vibrational_spectra = plots.SpectraPlotter(freq, IRintensity, Ramanactivity, broadening, fwhm)
+            plot_vibrational_spectra.plot_spectra()
+
+        elif code == 'so3lr-ana':
+            raise NotImplementedError("IR intensities are not yet correctly implemented from analyitical gradients!")
+            so3lr_ir_calculator = spectra.SO3LR_analytical_IR_Calculator(code, eigvecs, no_negfreqs=no_neg_freqs, subsystem_size=subsystem_size,)
+            so3lr_ir_calculator.calculate_dipole_gradients()
+            #np.savetxt('Cartesian_pol.txt', so3lr_ir_calculator.cartesian_pol)
+            IRintensity, Ramanactivity = so3lr_ir_calculator.spectra_calculation()
+            #plot_vibrational_spectra = plots.SpectraPlotter(freq, IRintensity, Ramanactivity, broadening, fwhm)
             plot_vibrational_spectra.plot_spectra()
 
         print('*' * 150) 
