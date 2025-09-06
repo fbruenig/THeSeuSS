@@ -406,7 +406,8 @@ class Calculator:
             self.non_periodic = not geo.get_pbc().any()
 
             calculate_hessian = True if code == 'so3lr-ana' else False
-            output_intermediate_quantities = ['partial_charges'] if code == 'so3lr' else None
+            #output_intermediate_quantities = ['partial_charges'] if code == 'so3lr' else None
+            output_intermediate_quantities = ['dipole_vec'] if code == 'so3lr' else None
 
             # Stresses are not yet implemented when calculating the hessian with so3lr
             # (but it is straightforward to implement)
@@ -539,17 +540,19 @@ class Calculator:
         else:
             atoms, calc = self.signle_point_periodic_read_input_for_ML(num_part)
         atoms.calc = calc
-        positions = atoms.get_positions()
-        #energy = atoms.get_potential_energy()
-        #forces = atoms.get_forces()
         calc.calculate(atoms)
-        #energy, forces, dipole_moment = calc.results['energy'], calc.results['forces'], calc.results['aux']['dipole_vec'][0]
-        energy, forces, charges = calc.results['energy'], calc.results['forces'], calc.results['aux']['partial_charges']
+        energy, forces, dipole_moment = calc.results['energy'], calc.results['forces'], calc.results['aux']['dipole_vec'][0]
         if self.subsystem_size is not None:
             forces = forces[:int(self.subsystem_size), :]
-            positions = positions[:int(self.subsystem_size), :]
-            charges = charges[:int(self.subsystem_size)]
-        dipole_moment = np.sum(charges[:,None]*positions,axis=0)
+
+        # # Alternative approach to calculate dipole moment:
+        # positions = atoms.get_positions()
+        # energy, forces, charges = calc.results['energy'], calc.results['forces'], calc.results['aux']['partial_charges']
+        # if self.subsystem_size is not None:
+        #    forces = forces[:int(self.subsystem_size), :]
+        #    positions = positions[:int(self.subsystem_size), :]
+        #    charges = charges[:int(self.subsystem_size)]
+        # dipole_moment = np.sum(charges[:,None]*positions,axis=0)
 
         if self.non_periodic:
             filename = f"energies_forces.txt"

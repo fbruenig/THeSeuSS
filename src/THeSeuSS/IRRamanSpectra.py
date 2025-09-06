@@ -201,7 +201,7 @@ class SO3LR_analytical_IR_Calculator(IntensityCalculator):
                 dispersion_energy_cutoff_lr_damping=2.,
                 dtype=np.float64,
                 calculate_obs_grads=True,
-                output_intermediate_quantities=["partial_charges"],
+                output_intermediate_quantities=["dipole_vec_x", "dipole_vec_y", "dipole_vec_z"],
                 output_atom_indices=self.subsystem_indices
                 )
         else:
@@ -210,7 +210,7 @@ class SO3LR_analytical_IR_Calculator(IntensityCalculator):
                 dispersion_energy_cutoff_lr_damping=2.,
                 dtype=np.float64,
                 calculate_obs_grads=True,
-                output_intermediate_quantities=["partial_charges"],
+                output_intermediate_quantities=["dipole_vec_x", "dipole_vec_y", "dipole_vec_z"],
                 output_atom_indices=self.subsystem_indices
                 )
         self.calc = calc
@@ -222,17 +222,32 @@ class SO3LR_analytical_IR_Calculator(IntensityCalculator):
         self._set_constants()
 
         self.calc.calculate(self.geo)
-        results = self.calc.results['obs_grads']['partial_charges_grad']
-        charges=np.array([results[i][0] for i in self.subsystem_indices])
-        charge_grads = np.array([results[i][1] for i in self.subsystem_indices])
-        print(charge_grads.shape)
-        positions = self.geo.get_positions()[self.subsystem_indices,:]
-        #positions -= np.min(positions,axis=0)
-        #mean_dip = np.sum(charges[:,None]*positions,axis=0)
-        charges -= np.mean(charges)
-        ids=np.tile(np.eye(3), (positions.shape[0],1))
-        self.cartesian_pol = np.repeat(charges, 3)[:,None] * ids + charge_grads.flatten()[:,None] * np.repeat(positions, 3, axis=0) # eAng/Ang
+        results = self.calc.results['obs_grads']
+
+        self.cartesian_pol = np.zeros((len(self.subsystem_indices)*3, 3), dtype=np.float64)
+        for j,dim in enumerate(['dipole_vec_x_grad', 'dipole_vec_y_grad', 'dipole_vec_z_grad']):
+            self.cartesian_pol[:, j] = np.array([results[dim][i][1] for i in self.subsystem_indices]).flatten()
+
         return self.pol, self.cartesian_pol
+
+    # def calculate_dipole_gradients(self):
+    #     """
+    #     Calculates the dipole gradients for SO3LR.
+    #     """
+    #     self._set_constants()
+
+    #     self.calc.calculate(self.geo)
+    #     results = self.calc.results['obs_grads']['partial_charges_grad']
+    #     charges=np.array([results[i][0] for i in self.subsystem_indices])
+    #     charge_grads = np.array([results[i][1] for i in self.subsystem_indices])
+
+    #     positions = self.geo.get_positions()[self.subsystem_indices,:]
+    #     np.save('charges.npy', charges)
+    #     np.save('charge_grads.npy', charge_grads)
+    #     np.save('positions.npy', positions)
+    #     ids=np.tile(np.eye(3), (positions.shape[0],1))
+    #     self.cartesian_pol = np.repeat(charges, 3)[:,None] * ids + charge_grads.flatten()[:,None] * np.repeat(positions, 3, axis=0) # eAng/Ang
+    #     return self.pol, self.cartesian_pol
 
     # def IRintensity(self):
     #     """

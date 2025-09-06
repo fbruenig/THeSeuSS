@@ -111,18 +111,19 @@ def main(
             files_prep.iterate_over_files()
             # This is very dirty but works precisely how we want:
             if subsystem_size is not None:
+                print(f'REMOVING DISPLACED STRUCTURES FOR ATOMS BEYOND THE SUBSYSTEM SIZE {subsystem_size}')
                 # # Delete subdirectories that start with 'Coord' but are not in the list of subsystem indices
                 all_dirs = [d for d in os.listdir('.') if os.path.isdir(d) and d.startswith('Coord')]
                 for dir_name in all_dirs:
                     xyz_index = int(dir_name.split('so3lr-')[1].split('.xyz')[0])
-                    if xyz_index > int(subsystem_size)*6 +1:
+                    if xyz_index > int(subsystem_size)*6:
                         subprocess.run(['rm', '-rf', dir_name])
 
                 # find all subdirs and files that contain so3lr-*.xyz
                 all_xyz_files = glob.glob('so3lr-*.xyz')
                 for xyz_file in all_xyz_files:
                     xyz_index = int(xyz_file.split('so3lr-')[1].split('.xyz')[0])
-                    if xyz_index > int(subsystem_size)*6 +1:
+                    if xyz_index > int(subsystem_size)*6:
                         subprocess.run(['rm', '-f', xyz_file])
 
 
@@ -172,12 +173,12 @@ def main(
             plot_vibrational_spectra.plot_spectra()
 
         elif code == 'so3lr-ana':
-            raise NotImplementedError("IR intensities are not yet correctly implemented from analyitical gradients!")
+            #raise NotImplementedError("IR intensities are not yet correctly implemented from analyitical gradients!")
             so3lr_ir_calculator = spectra.SO3LR_analytical_IR_Calculator(code, eigvecs, no_negfreqs=no_neg_freqs, subsystem_size=subsystem_size,)
             so3lr_ir_calculator.calculate_dipole_gradients()
             #np.savetxt('Cartesian_pol.txt', so3lr_ir_calculator.cartesian_pol)
             IRintensity, Ramanactivity = so3lr_ir_calculator.spectra_calculation()
-            #plot_vibrational_spectra = plots.SpectraPlotter(freq, IRintensity, Ramanactivity, broadening, fwhm)
+            plot_vibrational_spectra = plots.SpectraPlotter(freq, IRintensity, Ramanactivity, broadening, fwhm)
             plot_vibrational_spectra.plot_spectra()
 
         print('*' * 150) 
