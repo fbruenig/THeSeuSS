@@ -12,6 +12,7 @@ from THeSeuSS import MapAtoms as mapatoms
 from THeSeuSS import Coordinates as coords
 from THeSeuSS import InputsPreparation as inputs
 from THeSeuSS import CheckPeriodicvsNonPeriodic as pervsnonper
+from ase.io import read
 
 
 
@@ -82,11 +83,19 @@ class TwoPointCentralDiff():
         Retrieves the volume.
         """
 
-        new_path = os.path.join(self.path, 'vibrations')
-        contents = [item for item in os.listdir(new_path) if os.path.isdir(os.path.join(new_path, item))]
-        first_coord_dir = next((drct for drct in contents if drct.startswith("Coord")), None)
-        path_output_file = os.path.join(self.path, 'vibrations', first_coord_dir, self.output_file)
-        self._unit_cell_volume(path_output_file)
+        if 'so3lr' in self.code:
+            new_path = './'
+            contents = [item for item in os.listdir(new_path) if os.path.isdir(os.path.join(new_path, item))]
+            first_coord_dir = next((drct for drct in contents if drct.startswith("Coord")), None)
+            input_file = os.path.join(first_coord_dir, 'so3lr.xyz')
+            atoms = read(input_file)
+            self.volume = atoms.get_volume()
+        else:
+            new_path = os.path.join(self.path, 'vibrations')
+            contents = [item for item in os.listdir(new_path) if os.path.isdir(os.path.join(new_path, item))]
+            first_coord_dir = next((drct for drct in contents if drct.startswith("Coord")), None)
+            path_output_file = os.path.join(self.path, 'vibrations', first_coord_dir, self.output_file)
+            self._unit_cell_volume(path_output_file)
         print(f'VOLUME: {self.volume} A\N{SUPERSCRIPT THREE}')
 
         return self.volume

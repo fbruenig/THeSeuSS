@@ -48,7 +48,7 @@ class PeriodicvsNonPeriodic():
         """
         
         self.spglib_processor = MapAtoms.spglibProcessor(self.code)
-        self.phonopy_calculator = submit.PhonopyCalculator(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional)
+        self.phonopy_calculator = submit.PhonopyCalculator(self.code, self.cell_dims, self.output_file, self.dispersion, self.restart, self.commands, self.functional, subsystem_size=self.subsystem_size)
         self.geometry_conversion = geominput.GeometryConversion(self.code)
         self.generated_displacements_mol = dispsmolecules.GenerateDisplacements(self.code)
         self.check_calculator = check.CheckOutputSuccess(self.code, self.output_file, self.dispersion, self.functional)
@@ -125,10 +125,10 @@ class PeriodicvsNonPeriodic():
         If the system is non-periodic, generates displaced structures using the GenerateDisplacements class.
         """
 
-        if not self.non_periodic:
+        if not self.non_periodic and not 'so3lr' in self.code:
             self.phonopy_calculator.submit_phonopy_displacements()
         else:
-            self.generated_displacements_mol.create_the_displaced_structures()
+            self.generated_displacements_mol.create_the_displaced_structures(subsystem_size=self.subsystem_size)
 
     def periodic_space_group_calc(self):
         """

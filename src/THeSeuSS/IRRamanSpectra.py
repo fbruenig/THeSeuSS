@@ -93,7 +93,7 @@ class IntensityCalculator():
         if 'so3lr' in self.code:
             grad_dip = self.dipole_factor * self.cartesian_pol # D
             self.IR_intensity = np.sum(np.dot(np.transpose(grad_dip), self.eig_vec)**2, axis=0) * self.ir_factor # D^2/(A^2*amu)
-
+            print(self.IR_intensity.shape)
         if self.non_periodic:
             if self.code == 'aims':
                 grad_dip = self.dipole_factor * self.cartesian_pol # D
@@ -155,7 +155,6 @@ class IntensityCalculator():
         try:
             self.IRintensity()
             print(f'IR INTENSITY (D\N{SUPERSCRIPT TWO}/(A\N{SUPERSCRIPT TWO}amu))')
-            print(f'{self.IR_intensity}')
             self.IR_intensity = self.IR_intensity[self.no_negfreqs:]
             np.savetxt("IRintensity.txt", self.IR_intensity)
         except Exception as e:

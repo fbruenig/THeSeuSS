@@ -39,7 +39,8 @@ class PhonopyCalculator:
         dispersion: bool,
         restart: bool,
         commands: str,
-        functional: str
+        functional: str,
+        subsystem_size: str = None
     ):
 
         self.code = code
@@ -49,6 +50,7 @@ class PhonopyCalculator:
         self.restart = restart
         self.commands = commands
         self.functional = functional
+        self.subsystem_size = subsystem_size
         self.path = os.getcwd()
         self.conts = []
         self.forces = None
@@ -78,6 +80,8 @@ class PhonopyCalculator:
             non_periodic = check_periodic_non_periodic.check_periodic_vs_non_periodic()
             
             atoms = read('so3lr.xyz')
+            if self.subsystem_size is not None:
+                atoms = atoms[:int(self.subsystem_size)]
             symbols = atoms.get_chemical_symbols()
             cell = atoms.get_cell()
             positions = atoms.get_positions()
@@ -135,15 +139,15 @@ class PhonopyCalculator:
         supercells = self.phonon.supercells_with_displacements
         gen_supercell = self.phonon.supercell
         if 'so3lr' in self.code:
-            write_supercells_with_displacements('aims', gen_supercell, supercells)
+            write_supercells_with_displacements('aims', gen_supercell, supercells, optional_structure_info=())
             self._convert_aims_extxyz()
-        if self.code == 'aims':
+        elif self.code == 'aims':
             os.chdir('vibrations')
-            write_supercells_with_displacements('aims', gen_supercell, supercells)
+            write_supercells_with_displacements('aims', gen_supercell, supercells, optional_structure_info=())
             os.chdir('../')
         elif self.code == 'dftb+':
             os.chdir('vibrations')
-            write_supercells_with_displacements('dftbp', gen_supercell, supercells)
+            write_supercells_with_displacements('dftbp', gen_supercell, supercells, optional_structure_info=())
             os.chdir('../')
 
     def submit_phonopy_displacements(self):
@@ -262,15 +266,19 @@ class PhonopyCalculator:
         Reads the forces from all the outputs of so3lr.
         """
 
-        files = glob.glob("energies_forces-*")
-        files = sorted(files, key=lambda x: int(x.split('-')[-1].split('.')[0]))
-        self.all_forces = []
-        
-        for forces_file in files:
-            path_filename = os.path.join(self.path, forces_file)
-            if os.path.exists(path_filename):
-                forces = self.read_forces_from_files_ML(path_filename)
-                self.all_forces.append(forces)
+        #files = glob.glob("energies_forces-*")
+        #files = sorted(files, key=lambda x: int(x.split('-')[-1].split('.')[0]))
+        #self.all_forces = []
+        # for forces_file in self.conts:
+        #     path_filename = os.path.join(self.path, forces_file)
+        #     if os.path.exists(path_filename):
+        #         forces = self.read_forces_from_files_ML(path_filename)
+        #         self.all_forces.append(forces)
+        self.sort_directories()
+        for i in self.conts:
+            path_filename = self.force_identifier(i)
+            forces = self.read_forces_from_files_ML(path_filename)
+            self.all_forces.append(forces)
 
         return self.all_forces
 
@@ -331,6 +339,7 @@ class PhonopyCalculator:
                 }
                 self.dataset['first_atoms'].append(entry)
         elif 'so3lr' in self.code:
+            self.all_forces = []
             self.all_forces = self.all_forces_from_files_ML()
             
             for j, jj in zip(self.disps,self.all_forces):
@@ -413,7 +422,7 @@ class Calculator:
             # (but it is straightforward to implement)
             if not self.non_periodic:
                 calc = So3lrCalculator(
-                        lr_cutoff=12.0,
+                        lr_cutoff=11.0,
                         calculate_stress=True if code == 'so3lr' else False,
                         calculate_hessian=calculate_hessian,
                         dtype=np.float64,
@@ -478,7 +487,8 @@ class Calculator:
         Reads the structural characteristics and set the calculator.
         """
 
-        filename = f"so3lr-{int(num_part):03d}.xyz"
+        #filename = f"so3lr-{int(num_part):03d}.xyz"
+        filename = f"so3lr.xyz"
         atoms = read(filename)
         positions = atoms.get_positions()
         symbols = atoms.get_chemical_symbols()
@@ -498,6 +508,13 @@ class Calculator:
 
         atoms, calc = self.read_input_for_ML()
         atoms.calc = calc
+
+        if atoms.get_pbc().any():
+            from jaxpme.kspace import get_kgrid_mesh
+            import jax.numpy as jnp
+            k_spacing = 1.0
+            atoms.info.update(k_grid = get_kgrid_mesh(jnp.array(atoms.get_cell()), k_spacing))
+            atoms.info.update(k_smearing = jnp.array([2.0]))
 
         # Apply constraints if specific atoms should be optimized
         if self.optimize_only_subsystem:
@@ -539,6 +556,12 @@ class Calculator:
             atoms, calc = self.read_input_for_ML()
         else:
             atoms, calc = self.signle_point_periodic_read_input_for_ML(num_part)
+            from jaxpme.kspace import get_kgrid_mesh
+            import jax.numpy as jnp
+            k_spacing = 1.0
+            atoms.info.update(k_grid = get_kgrid_mesh(jnp.array(atoms.get_cell()), k_spacing))
+            atoms.info.update(k_smearing = jnp.array([2.0]))
+
         atoms.calc = calc
         calc.calculate(atoms)
         energy, forces, dipole_moment = calc.results['energy'], calc.results['forces'], calc.results['aux']['dipole_vec'][0]
@@ -557,7 +580,8 @@ class Calculator:
         if self.non_periodic:
             filename = f"energies_forces.txt"
         else:
-            filename = f"energies_forces-{int(num_part):03d}.txt" 
+            #filename = f"energies_forces-{int(num_part):03d}.txt"
+            filename = f"energies_forces.txt"
 
         with open(filename, "w") as f:
             f.write(f"Energy = {energy:.8f}\n")
@@ -588,6 +612,13 @@ class Calculator:
         atoms, calc = self.read_input_for_ML()
         atoms.calc = calc
 
+        if atoms.get_pbc().any():
+            from jaxpme.kspace import get_kgrid_mesh
+            import jax.numpy as jnp
+            k_spacing = 1.0
+            atoms.info.update(k_grid = get_kgrid_mesh(jnp.array(atoms.get_cell()), k_spacing))
+            atoms.info.update(k_smearing = jnp.array([2.0]))
+
         energy = atoms.get_potential_energy()
         hessian = calc.get_property('hessian', atoms)
 
@@ -608,25 +639,25 @@ class Calculator:
         Submits multiple single point calculations with so3lr.
         """
 
-        if self.non_periodic:
-            path = os.getcwd()
-            contents = [item for item in os.listdir(path) if os.path.isdir(os.path.join(path, item))]
-            conts = []
-            for ii in contents:
-                if 'Coord' in ii:
-                    conts.append(ii)
-            conts.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
-            for i in conts:
-                os.chdir(i)
-                num_part = None
-                self.submit_single_point_for_so3lr(num_part)
-                os.chdir('../')
-        else:
-            files = glob.glob("so3lr-*")
-            for old_file in files:
-                num_part = old_file.split('-')[-1]
-                num_part = num_part.split('.')[0]
-                self.submit_single_point_for_so3lr(num_part)
+        #if self.non_periodic:
+        path = os.getcwd()
+        contents = [item for item in os.listdir(path) if os.path.isdir(os.path.join(path, item))]
+        conts = []
+        for ii in contents:
+            if 'Coord' in ii:
+                conts.append(ii)
+        conts.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
+        for i in conts:
+            os.chdir(i)
+            num_part = None
+            self.submit_single_point_for_so3lr(num_part)
+            os.chdir('../')
+        # else:
+        #     files = glob.glob("so3lr-*")
+        #     for old_file in files:
+        #         num_part = old_file.split('-')[-1]
+        #         num_part = num_part.split('.')[0]
+        #         self.submit_single_point_for_so3lr(num_part)
 
     def frozen_phonon_approximation_drct(self):
         """

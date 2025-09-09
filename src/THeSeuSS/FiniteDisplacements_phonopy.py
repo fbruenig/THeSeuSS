@@ -445,7 +445,9 @@ class FDSubdirectoriesGeneration():
                 print('*' * 150)
             except Exception as e:
                 print(f'THE DIRECTORIES THAT CONTAIN THE DISPLACED STRUCTURES HAVE NOT BEEN GENERATED / AN ERROR WAS OCCURED: {e}')
-        elif self.code == 'so3lr' and non_periodic:
+        #elif self.code == 'so3lr' and non_periodic:
+        #    self._displacements()
+        #elif self.code == 'so3lr' and not non_periodic:
+        #    pass
+        elif self.code == 'so3lr':
             self._displacements()
-        elif self.code == 'so3lr' and not non_periodic:
-            pass

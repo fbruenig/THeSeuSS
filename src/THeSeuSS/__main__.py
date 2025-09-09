@@ -66,7 +66,7 @@ def main(
                                    subsystem_reference_id=subsystem_reference_id,
                                    optimize_only_subsystem=optimize_only_subsystem)
     check_calculator = check.CheckOutputSuccess(code, output_file, dispersion, restart, functional)
-    phonopy_calculator = submit.PhonopyCalculator(code, cell_dims, output_file, dispersion, restart, commands, functional)
+    phonopy_calculator = submit.PhonopyCalculator(code, cell_dims, output_file, dispersion, restart, commands, functional, subsystem_size=subsystem_size)
 
 
     message = 'Input'
@@ -109,22 +109,22 @@ def main(
             files_prep = disp.FDSubdirectoriesGeneration(code, kpoints, functional, eev, rho, etot, forces,
                     sc_iter_limit, species, pol_grid, SCC_tolerance, max_SCC_iterations, output_file, dispersion, dispersion_type, restart)
             files_prep.iterate_over_files()
-            # This is very dirty but works precisely how we want:
-            if subsystem_size is not None:
-                print(f'REMOVING DISPLACED STRUCTURES FOR ATOMS BEYOND THE SUBSYSTEM SIZE {subsystem_size}')
-                # # Delete subdirectories that start with 'Coord' but are not in the list of subsystem indices
-                all_dirs = [d for d in os.listdir('.') if os.path.isdir(d) and d.startswith('Coord')]
-                for dir_name in all_dirs:
-                    xyz_index = int(dir_name.split('so3lr-')[1].split('.xyz')[0])
-                    if xyz_index > int(subsystem_size)*6:
-                        subprocess.run(['rm', '-rf', dir_name])
+            # # This is very dirty but works precisely how we want:
+            # if subsystem_size is not None:
+            #     print(f'REMOVING DISPLACED STRUCTURES FOR ATOMS BEYOND THE SUBSYSTEM SIZE {subsystem_size}')
+            #     # # Delete subdirectories that start with 'Coord' but are not in the list of subsystem indices
+            #     all_dirs = [d for d in os.listdir('.') if os.path.isdir(d) and d.startswith('Coord')]
+            #     for dir_name in all_dirs:
+            #         xyz_index = int(dir_name.split('so3lr-')[1].split('.xyz')[0])
+            #         if xyz_index > int(subsystem_size)*6:
+            #             subprocess.run(['rm', '-rf', dir_name])
 
-                # find all subdirs and files that contain so3lr-*.xyz
-                all_xyz_files = glob.glob('so3lr-*.xyz')
-                for xyz_file in all_xyz_files:
-                    xyz_index = int(xyz_file.split('so3lr-')[1].split('.xyz')[0])
-                    if xyz_index > int(subsystem_size)*6:
-                        subprocess.run(['rm', '-f', xyz_file])
+            #     # find all subdirs and files that contain so3lr-*.xyz
+            #     all_xyz_files = glob.glob('so3lr-*.xyz')
+            #     for xyz_file in all_xyz_files:
+            #         xyz_index = int(xyz_file.split('so3lr-')[1].split('.xyz')[0])
+            #         if xyz_index > int(subsystem_size)*6:
+            #             subprocess.run(['rm', '-f', xyz_file])
 
 
         if code == 'aims' or code == 'dftb+':
