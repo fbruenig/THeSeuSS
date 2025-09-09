@@ -7,6 +7,7 @@ import numpy as np
 from THeSeuSS import InputsPreparation as inputs
 from itertools import chain
 from ase import Atoms
+from ase.io import read
 from ase.io.extxyz import write_extxyz
 import shutil, os
 from collections import OrderedDict
@@ -115,9 +116,11 @@ class GenerateDisplacements():
                         line += f' {i} {no_type} {coordinates_str}\n' 
                     fh.write(line)
         else:
-            atoms = Atoms(symbols = types,
-                    positions = coord,
-                    pbc = False)
+            #atoms = Atoms(symbols = types,
+            #        positions = coord,
+            #        pbc = False)
+            atoms = read(self.geometry_processor.geom_input) # reads the original structure with all its properties, inkl. pbc and cell
+            atoms.set_positions(coord)
             with open(self.disp_inp, 'w') as file_for_ML:
                 write_extxyz(file_for_ML, atoms)
 
@@ -140,7 +143,7 @@ class GenerateDisplacements():
             path_geom_inp_supercell = os.path.join(self.path, 'vibrations', geom_inp_supercell)
             shutil.copy(path_geom_inp, path_geom_inp_supercell)
 
-    def create_the_displaced_structures(self):
+    def create_the_displaced_structures(self, subsystem_size: str = None):
         """
         Generate displaced input structures by adding and subtracting the displacement value.
         """
@@ -150,8 +153,12 @@ class GenerateDisplacements():
         no_of_atoms = self._get_no_of_atoms()
         self._define_the_displacement()
         k = 1
+        if subsystem_size is not None:
+            max_index = int(subsystem_size)
+        else:
+            max_index = no_of_atoms
 
-        for i, row in enumerate(coordinates):
+        for i, row in enumerate(coordinates[:max_index]):
             for j, value in enumerate(row):
                 coordinates[i][j] += self.disp
                 self._name_displaced_input(k)
